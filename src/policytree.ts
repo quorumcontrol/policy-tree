@@ -112,10 +112,14 @@ export class PolicyTree {
         const policy = await this.fetchPolicy()
 
         let input:PolicyInput = {...trans}
-
+        log("transition: ", trans)
         let res = await policy.evaluate<PolicyResponse>(input)
-        log("res: ", res, ' from transition: ', trans)
+        log("res: ", res, ' from transition: ', input)
 
+        // if the policy returns a needs key then we will give the policy
+        // the information it needs
+        // for now only *local* keys are available, but it should include things like the state
+        // of other objects in the network
         if (res.needs) {
             const valPromises:{[key:string]:Promise<any>} = {}
             for(const key of res.needs.keys) {
@@ -127,7 +131,7 @@ export class PolicyTree {
             }
             input.keys = vals
             res = await policy.evaluate<PolicyResponse>(input)
-            log("updated res: ", res, ' from transition: ', trans)
+            log("updated res: ", res, ' from transition: ', input)
         }
 
         if (!res.allow) {

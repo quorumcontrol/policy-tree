@@ -1,9 +1,7 @@
 package needs
 
-default mods = {"needs": {"keys": ["/hello"]}}
-
 is_set_data {
-	input.type == "setdata"
+    input.type == "setdata"
 }
 
 is_setting_hello {
@@ -11,34 +9,38 @@ is_setting_hello {
 }
 
 has_all_needs {
-	input.keys["/hello"]
+    input.keys["/hello"]
 }
 
 is_correct_key {
-	input.keys["/hello"] == "world"
+    input.keys["/hello"] == "world"
 }
 
 allow {
 	is_set_data
-	is_correct_key
+    is_correct_key
 }
 
 allow {
 	is_set_data
-	is_setting_hello
+    is_setting_hello
 }
 
-mods = {"allow": false} {
-	not allow
-	has_all_needs
+mods["needs"] = needs {
+	not has_all_needs
+    not is_setting_hello
+  	needs := {
+    	"keys": ["/hello"]
+    }
 }
 
-mods = {
-	"allow": true,
-	"pairs": [{
-		"key": input.metadata.key,
-		"value": input.metadata.value,
-	}],
-} {
+mods["allow"] = allow
+
+mods["pairs"] = pairs {
 	allow
+	pairs := [{
+        "key": input.metadata.key,
+        "value": input.metadata.value
+	}]
 }
+
