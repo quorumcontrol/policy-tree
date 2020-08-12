@@ -11,9 +11,9 @@ export class Policy {
         })
     }
 
-    async evaluate(input:any) {
+    async evaluate<T=any>(input:any):Promise<T> {
         const policy = await this.policyPromise
-        return policy.evaluate(input)
+        return policy.evaluate(input)[0].result
     }
 }
 

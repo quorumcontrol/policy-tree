@@ -21,8 +21,11 @@ describe('Policy', ()=> {
                 value: 'test',
             }
         })
-        console.log(res)
-
+        
+        expect(res.pairs).to.have.lengthOf(1)
+        expect(res.pairs[0].key).to.equal('test')
+        expect(res.pairs[0].value).to.equal('test')
+        expect(res.allow).to.be.true
 
         await repo.close()
     })

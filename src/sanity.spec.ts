@@ -33,4 +33,5 @@ describe('memory repo', ()=> {
         expect(retVal.toString('hex')).to.equal(val.toString('hex'))
         await repo.close()
     })
+    
 })
