@@ -9,7 +9,7 @@ describe('Policy', ()=> {
     it('executes policy', async ()=> {
         const repo = await openedMemoryRepo('PolicyTree/executes')
     
-        const setDataBytes = fs.readFileSync('policies/default/setdata.wasm')
+        const setDataBytes = fs.readFileSync('policies/default/setdata/setdata.wasm')
 
         const block = await makeBlock(setDataBytes)
 
