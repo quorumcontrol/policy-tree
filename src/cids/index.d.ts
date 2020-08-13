@@ -18,7 +18,7 @@ declare module 'cids' {
 		prefix: Buffer
 		toV0(): CID
 		toV1(): CID
-		toBaseEncodedString(base?: string): string
+		toString(base?: string): string
 		toJSON(): SerializedCID
 		equals(other: CID): boolean
 	}

@@ -1,9 +1,12 @@
 import CID from 'cids'
-import { makeBlock, IBlock } from './repo/block'
+import { makeBlock, IBlock, decodeBlock } from './repo/block'
 import Policy from './policy'
 import debug from 'debug'
+import {Transition, TransitionSet,CanonicalTransitionSet} from './transitionset'
 
 const log = debug("PolicyTree")
+
+export const notAllowedErr = "TRANSACTION_NOT_ALLOWED"
 
 const HashMap = require('./hashmap')
 // A PolicyTree is a state machine. It starts from a genesis state that defines rules,
@@ -15,16 +18,6 @@ interface ImmutableMap {
     set:(key:string,value:any)=>Promise<void>
     get:<T>(key:string)=>Promise<T>
     delete:(key:string)=>Promise<void>
-}
-
-interface Transition {
-    type:string
-    metadata:any
-}
-
-interface TransitionSet {
-    height:number
-    transitions:Transition[]
 }
 
 interface KeyValuePair {
@@ -86,9 +79,42 @@ export class PolicyTree {
         return (await this.hashMap).cid
     }
 
+    async applySet(set:TransitionSet) {
+        // look up the current, if that is higher than what's being tried here than throw
+        const currentCid = await this.get('/transition-sets/current')
+        if (currentCid) {
+            const blk:IBlock = await this.store.get(currentCid)
+            const canonicalObj = await decodeBlock<CanonicalTransitionSet>(blk)
+            if (canonicalObj.height >= set.height) {
+                throw new Error("block already applied")
+            }
+        }
+        const transitions = await set.transitions()
+        // apply the transitions in order, if one fails then just skip over it.
+        for(const transition of transitions) {
+            try {
+                await this.transition({...transition, height: set.height})
+            } catch(err) {
+                if(err.message !== notAllowedErr) {
+                    throw err
+                }
+                // otherwise do nothing and continue (ignoring the transition)
+            }
+        }
+        const setObj = await set.toCanonicalObject()
+        const key = `/transition-sets/${set.height}`
+        setObj.previous = key
+        const setBlock = await makeBlock(setObj)
+
+        this.store.put(setBlock)
+        // we now have an updated tree, let's save some metadata
+        await this.set(`/transition-sets/current`, setBlock.cid)
+        await this.set(key, setBlock.cid)
+    }
+
     // TODO: this is never invalidated, so if a policy lets you modify a policy
     // this needs to be invalidated
-    fetchPolicy() {
+    private fetchPolicy() {
         if (this.policy) {
             return this.policy
         }
@@ -106,7 +132,6 @@ export class PolicyTree {
         return this.policy
     }
 
-    // TODO: this isn't the real interface, more of an illustration
     async transition(trans:Transition) {
         const hshMap = await this.hashMap
         const policy = await this.fetchPolicy()
@@ -135,7 +160,7 @@ export class PolicyTree {
         }
 
         if (!res.allow) {
-            throw new Error("not allowed")
+            throw new Error(notAllowedErr)
         }
 
         for(const pair of res.pairs) {

@@ -17,7 +17,7 @@ export async function makeBlock(obj:any):Promise<IBlock> {
     return new IpldBlock(block.encode(), (await block.cid()))
 }
 
-export async function decodeBlock(ipldBlock:IBlock):Promise<any> {
+export async function decodeBlock<T=any>(ipldBlock:IBlock):Promise<T> {
     const block = Block.decoder(ipldBlock.data, 'dag-cbor')
     return block.decode()
 }

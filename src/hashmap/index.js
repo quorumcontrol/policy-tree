@@ -289,15 +289,16 @@ HashMap.create = async function create(loader, root, options) {
 
     const store = {
         async load(cid) {
-            const bytes = await loader.get(cid)
-            if (!bytes) {
+            const ipldBlk = await loader.get(cid)
+            if (!ipldBlk) {
                 return undefined
             }
-            const block = Block.decoder(bytes, DEFAULT_BLOCK_CODEC)
+            const block = Block.decoder(ipldBlk.data, DEFAULT_BLOCK_CODEC)
             if (!(await block.validate())) {
                 throw new Error(`Loaded block for ${cid.toString()} did not validate bytes against CID`)
             }
-            return block.decode()
+            const ret = block.decode()
+            return ret
         },
 
         async save(obj) {

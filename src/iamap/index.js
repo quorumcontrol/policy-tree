@@ -191,6 +191,10 @@ class IAMap {
         }
         ro(this, 'store', store)
 
+        if (map instanceof Uint8Array) {
+            map = Buffer.from(map)
+        }
+
         this.id = null
         ro(this, 'config', buildConfig(options))
 
@@ -593,7 +597,7 @@ function findElement(node, bitpos, key) {
     if (element.bucket) { // data element
         for (let bucketIndex = 0; bucketIndex < element.bucket.length; bucketIndex++) {
             const bucketEntry = element.bucket[bucketIndex]
-            if (bucketEntry.key.equals(key)) {
+            if (key.equals(bucketEntry.key)) {
                 return { data: { found: true, elementAt, element, bucketIndex, bucketEntry } }
             }
         }
@@ -994,7 +998,7 @@ function isRootSerializable(serializable) {
  * @returns {boolean} An indication that the serialisable form is or is not an IAMap node
  */
 function isSerializable(serializable) {
-    return Array.isArray(serializable.data) && Buffer.isBuffer(serializable.map)
+    return Array.isArray(serializable.data) && (Buffer.isBuffer(serializable.map) || serializable.map instanceof Uint8Array)
 }
 
 /**

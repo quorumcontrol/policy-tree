@@ -5,7 +5,7 @@ is_set_data {
 }
 
 is_setting_hello {
-	input.metadata.key == "/hello"
+    input.metadata.key == "/hello"
 }
 
 has_all_needs {
@@ -41,6 +41,6 @@ mods["pairs"] = pairs {
 	pairs := [{
         "key": input.metadata.key,
         "value": input.metadata.value
-	}]
+    }]
 }
 
