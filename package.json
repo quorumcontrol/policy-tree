@@ -21,7 +21,8 @@
     "memdown": "^5.1.0",
     "multicodec": "^2.0.0",
     "murmurhash3js-revisited": "^3.0.0",
-    "stellar-sdk": "^5.0.4"
+    "stellar-sdk": "^5.0.4",
+    "varint": "^5.0.0"
   },
   "devDependencies": {
     "@types/chai": "^4.2.12",
@@ -29,6 +30,7 @@
     "@types/debug": "^4.1.5",
     "@types/mocha": "^8.0.2",
     "@types/node": "^14.0.27",
+    "@types/varint": "^5.0.0",
     "chai": "^4.2.0",
     "chai-as-promised": "^7.1.1",
     "mocha": "^8.1.1",

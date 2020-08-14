@@ -2,6 +2,7 @@ import 'mocha'
 import {expect} from 'chai'
 import {openedMemoryRepo} from '../repo'
 import { makeBlock } from '../repo/block'
+import {serialize,deserialize} from './serialize'
 
 const HashMap = require('./index')
 
@@ -19,6 +20,29 @@ describe('HashMap', ()=> {
         const map = await HashMap.create(repo.blocks)
         await map.set("test", 'hi')
         expect(await map.get('test')).to.equal('hi')
+    })
+
+    it('serializes', async ()=> {
+        const map = await HashMap.create(repo.blocks)
+        await map.set("test", 'hi')
+
+        const iterations = 100
+
+        for (let i = 0; i< iterations; i++) {
+            await map.set(`test-${i}`, 'hi')
+        }
+
+        const serialized = await serialize(map, repo.blocks)
+        expect(serialized.byteLength).to.be.greaterThan(100)
+
+        const newRepo = await openedMemoryRepo('deserialized')
+        const deserialized = await deserialize(newRepo.blocks, serialized)
+
+        for (let i = 0; i< iterations; i++) {
+            expect((await deserialized.get(`test-${i}`)).toString()).to.equal('hi')
+        }
+
+        await newRepo.close()
     })
 
     it('sets, deeply', async ()=> {

@@ -2,7 +2,7 @@ import CID from 'cids'
 
 const Block = require('@ipld/block/defaults.js')
 const IpldBlock = require('ipld-block')
-
+const dagCBOR = require('ipld-dag-cbor')
 /** 
  * An IPFS Block
  * @public
@@ -10,6 +10,10 @@ const IpldBlock = require('ipld-block')
 export interface IBlock {
     data: Buffer
     cid: CID
+}
+
+export async function blockFromBits(bits:Buffer):Promise<IBlock> {
+    return new IpldBlock(bits, await dagCBOR.util.cid(bits))
 }
 
 export async function makeBlock(obj:any):Promise<IBlock> {
