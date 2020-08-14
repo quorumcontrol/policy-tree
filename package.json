@@ -20,7 +20,8 @@
     "ipld-hashmap": "^1.0.0",
     "memdown": "^5.1.0",
     "multicodec": "^2.0.0",
-    "murmurhash3js-revisited": "^3.0.0"
+    "murmurhash3js-revisited": "^3.0.0",
+    "stellar-sdk": "^5.0.4"
   },
   "devDependencies": {
     "@types/chai": "^4.2.12",

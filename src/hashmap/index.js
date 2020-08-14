@@ -8,7 +8,7 @@ const DEFAULT_BLOCK_CODEC = 'dag-cbor'
 const DEFAULT_HASH_ALGORITHM = 'murmur3-32'
 const DEFAULT_HASHER = murmur332Hasher
 const DEFAULT_HASH_BYTES = 32
-const DEFAULT_BITWIDTH = 8
+const DEFAULT_BITWIDTH = 4
 const DEFAULT_BUCKET_SIZE = 3
 
 /**

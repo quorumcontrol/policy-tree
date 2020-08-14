@@ -13,22 +13,41 @@ interface EnhancedTransition extends Transition {
     block?:IBlock
 }
 
+export type Metadata = {[key:string]:any}
+
 export interface CanonicalTransitionSet {
     height: number
     source: string
     transitions: Transition[]
+    metadata:Metadata
     previous?: string
+}
+
+interface TransitionSetConstructor {
+    source: string
+    height: number
+    transitions:Transition[]
+    metadata?:Metadata
+    previous?:string
 }
 
 export class TransitionSet {
     source:string
     height:number
+    metadata:Metadata
+    previous?:string
     private transitionsHolder:EnhancedTransition[]
 
-    constructor(source: string, height:number, transitions:Transition[]) {
+    static fromCanonical(obj:CanonicalTransitionSet) {
+        return new TransitionSet(obj)
+    }
+
+    constructor({source,height,transitions,previous,metadata = {}}:TransitionSetConstructor) {
         this.source = source
         this.height = height
         this.transitionsHolder = transitions
+        this.metadata = metadata
+        this.previous = previous
     }
 
     async transitions() {
@@ -44,7 +63,8 @@ export class TransitionSet {
             transitions: this.transitionsHolder.map((enhancedT)=> {
                 const {cid,block, ...originalTrans} = enhancedT
                 return originalTrans
-            })
+            }),
+            metadata: this.metadata,
         }
     }
 

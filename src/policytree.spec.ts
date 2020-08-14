@@ -1,14 +1,10 @@
 import 'mocha'
-import Chai, { expect } from 'chai'
-import chaiAsPromised from 'chai-as-promised';
+import { expect } from 'chai'
 import { openedMemoryRepo } from './repo'
 import fs from 'fs'
 import { makeBlock } from './repo/block'
 import { PolicyTree } from './policytree'
 import { TransitionSet } from './transitionset';
-
-Chai.use(chaiAsPromised)
-
 
 const setDataBytes = fs.readFileSync('policies/default/setdata/setdata.wasm')
 
@@ -47,32 +43,36 @@ describe('PolicyTree', () => {
         expect((await tree.get('hi'))).to.equal('hi')
     })
 
-    it('works with transition sets', async ()=> {
+    it('works with transition sets', async () => {
         const block = await makeBlock(setDataBytes)
         await repo.blocks.put(block)
         const tree = await PolicyTree.create(repo.blocks, { policy: block.cid })
-        const set = new TransitionSet("test", 0, [
-            {
-                type: 'setdata',
-                metadata: {
-                    'key': '/hi',
-                    'value': 'hi'
+        const set = new TransitionSet({
+            source: "test",
+            height: 0,
+            transitions: [
+                {
+                    type: 'setdata',
+                    metadata: {
+                        'key': '/hi',
+                        'value': 'hi'
+                    }
+                },
+                {
+                    type: 'setdata',
+                    metadata: {
+                        'key': '/cool',
+                        'value': 'cool'
+                    }
                 }
-            },
-            {
-                type: 'setdata',
-                metadata: {
-                    'key': '/cool',
-                    'value': 'cool'
-                }
-            }
-        ])
+            ]
+        })
         await tree.applySet(set)
         expect((await tree.get('/hi'))).to.equal('hi')
         expect((await tree.get('/cool'))).to.equal('cool')
     })
 
-    it('performs', async ()=> {
+    it('performs', async () => {
         const block = await makeBlock(setDataBytes)
         await repo.blocks.put(block)
         const tree = await PolicyTree.create(repo.blocks, { policy: block.cid })
@@ -93,8 +93,12 @@ describe('PolicyTree', () => {
         }]
 
         const hrstart = process.hrtime()
-        for (let i=0; i< 100;i++) {
-            const set = new TransitionSet("test", i, trans)
+        for (let i = 0; i < 100; i++) {
+            const set = new TransitionSet({
+                source: "test",
+                height: i,
+                transitions: trans
+            })
             await tree.applySet(set)
         }
         const hrend = process.hrtime(hrstart)
@@ -102,6 +106,38 @@ describe('PolicyTree', () => {
         // expect that to take < 600ms
         expect(hrend[0]).to.be.equal(0)
         expect(hrend[1] / 1000000).to.be.lessThan(600)
+    })
+
+    it('gets latest transitionSet', async () => {
+        const needsBytes = fs.readFileSync('policies/examples/needs/needs.wasm')
+        const block = await makeBlock(needsBytes)
+        await repo.blocks.put(block)
+        const tree = await PolicyTree.create(repo.blocks, { policy: block.cid })
+
+        const set = new TransitionSet({
+            source: 'test',
+            height: 0,
+            transitions: [
+                {
+                    type: 'setdata',
+                    metadata: {
+                        'key': '/hello',
+                        'value': 'hi'
+                    }
+                },
+            ],
+            metadata: {
+                test: 24
+            },
+        })
+
+        await tree.applySet(set)
+        
+        const retSet = await tree.lastTransitionSet()
+        if (retSet === null) {
+            throw new Error("null ret set")
+        }
+        expect(retSet.source).to.equal(set.source)
     })
 
 

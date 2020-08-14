@@ -25,7 +25,7 @@ describe('HashMap', ()=> {
         const blk = await makeBlock({test: true})
         const map = await HashMap.create(repo.blocks)
 
-        const iterations = 150
+        const iterations = 500
 
         for (let i = 0; i< iterations; i++) {
             await map.set(`test-${i}`, blk.cid)

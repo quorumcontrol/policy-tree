@@ -35,6 +35,7 @@ interface PolicyResponse {
 
 export interface GenesisOptions {
     policy?: CID
+    messageAccount?:string
     metadata?:any
 }
 
@@ -79,16 +80,24 @@ export class PolicyTree {
         return (await this.hashMap).cid
     }
 
-    async applySet(set:TransitionSet) {
-        // look up the current, if that is higher than what's being tried here than throw
+    async lastTransitionSet() {
         const currentCid = await this.get('/transition-sets/current')
         if (currentCid) {
             const blk:IBlock = await this.store.get(currentCid)
             const canonicalObj = await decodeBlock<CanonicalTransitionSet>(blk)
-            if (canonicalObj.height >= set.height) {
-                throw new Error("block already applied")
-            }
+            return TransitionSet.fromCanonical(canonicalObj)
         }
+
+        return null
+    }
+
+    async applySet(set:TransitionSet) {
+        // look up the current, if that is higher than what's being tried here than throw
+        const lastSet = await this.lastTransitionSet()
+        if (lastSet && lastSet.height >= set.height) {
+            throw new Error("block already applied")
+        }
+        
         const transitions = await set.transitions()
         // apply the transitions in order, if one fails then just skip over it.
         for(const transition of transitions) {
@@ -132,6 +141,7 @@ export class PolicyTree {
         return this.policy
     }
 
+    // TODO: you should always use a set
     async transition(trans:Transition) {
         const hshMap = await this.hashMap
         const policy = await this.fetchPolicy()
