@@ -1,6 +1,6 @@
 import StellarSdk, { Operation, Server, TransactionBuilder, ServerApi } from 'stellar-sdk'
 import { GenesisOptions, PolicyTree } from '../policytree';
-import { makeBlock, decodeBlock } from '../repo/block';
+import { makeBlock } from '../repo/block';
 import Repo, { Key } from '../repo/datastore';
 import CID from 'cids';
 import { Transition, TransitionSet } from '../transitionset';
@@ -40,7 +40,7 @@ export class StellarBack {
         const blk = await makeBlock(genesis)
         await this.repo.blocks.put(blk)
         const siaUrl = await uploadBuffer(blk.data)
-        console.log("siaUrl: ", siaUrl)
+        log("siaUrl: ", siaUrl)
 
         const treeP = PolicyTree.create(this.repo.blocks, genesis)
 
@@ -90,11 +90,19 @@ export class StellarBack {
 
         try {
             const transactionResponse = await server.submitTransaction(transaction);
-            console.log('transition: ', trans, ' transaction: ', transactionResponse)
+            log('transition: ', trans, ' transaction: ', transactionResponse)
             return true
         } catch (err) {
             console.error(err);
         }
+    }
+
+    private async getLocal(did:string) {
+        const existingBits = await this.repo.datastore.get(new Key(did))
+        if (existingBits) {
+            return new PolicyTree(this.repo.blocks, new CID(Buffer.from(existingBits)))
+        }
+        return null
     }
 
     async getAsset(did: string) {
@@ -102,19 +110,19 @@ export class StellarBack {
         const genesisTrans = await server.transactions().transaction(hsh).call()
 
         let tree:PolicyTree
-        const existingBits = await this.repo.datastore.get(new Key(did))
-        if (existingBits) {
-            tree = new PolicyTree(this.repo.blocks, new CID(Buffer.from(existingBits)))
+        const localTree = await this.getLocal(did)
+        if (localTree) {
+            tree = localTree
         } else {
             const mp = await this.transactionToHashMap(genesisTrans)
             tree = new PolicyTree(this.repo.blocks, mp.cid)
         }
-
+        
         const latest = await tree.lastTransitionSet()
         
         const pagingToken = latest ? latest.metadata['pagingToken'] : genesisTrans.paging_token
 
-        const transactions = await server.transactions().forAccount('GBE3HUH4YAWYOUU4NISEIRAUVTXCUZUBMD6FPDSOHDWGGJEJJBH22TMD').includeFailed(false).cursor(pagingToken).call()
+        const transactions = await server.transactions().forAccount(publicKey).includeFailed(false).cursor(pagingToken).call()
         return this.playTransactions(tree, did, transactions)
     }
 
@@ -162,5 +170,4 @@ export class StellarBack {
 
         return tree
     }
-
 }
