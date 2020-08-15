@@ -49,6 +49,9 @@ export function downloadFile(skylink: string, customOptions = {}) {
 }
 
 export function uploadBuffer(buf: Buffer, customOptions = {}):Promise<string> {
+    if (!Buffer.isBuffer(buf)) {
+        buf = Buffer.from(buf)
+    }
     const opts = { ...defaultUploadOptions, ...customOptions };
 
     const formData = new FormData();

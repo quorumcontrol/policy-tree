@@ -33,7 +33,7 @@ describe('stellar', ()=> {
         let tree = await stellar.getAsset(did)
         expect(await tree.lastTransitionSet()).to.be.null
         
-        await stellar.transitionAsset({
+        await stellar.transitionAsset(did, {
             type: 'setdata',
             metadata: {
                 'key': 'hi',
