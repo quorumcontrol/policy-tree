@@ -18,11 +18,11 @@ const priKey = 'SBZGFEQ2HN7TLPZTD4QJLVPBYF64R532UYDF2TYX5U74QT6GI2Z6ULQM'
 export const server = new Server('https://horizon-testnet.stellar.org');
 const feePromise = server.fetchBaseFee();
 
-function siaUrlToBuf(url:string) {
+function siaUrlToBuf(url: string) {
     return Buffer.from(url, 'utf-8')
 }
 
-function bufToSiaUrl(buf:Buffer) {
+function bufToSiaUrl(buf: Buffer) {
     return buf.toString('utf-8')
 }
 
@@ -33,7 +33,7 @@ export class StellarBack {
         this.repo = repo
     }
 
-    async createAsset(genesis:GenesisOptions) {
+    async createAsset(genesis: GenesisOptions) {
         const account = await server.loadAccount(publicKey);
         const fee = await feePromise
 
@@ -65,7 +65,7 @@ export class StellarBack {
         }
     }
 
-    async transitionAsset(did:string, trans: Transition) {
+    async transitionAsset(did: string, trans: Transition) {
         const account = await server.loadAccount(publicKey);
         const fee = await feePromise
 
@@ -97,7 +97,7 @@ export class StellarBack {
         }
     }
 
-    private async getLocal(did:string) {
+    private async getLocal(did: string) {
         const existingBits = await this.repo.datastore.get(new Key(did))
         if (existingBits) {
             return new PolicyTree(this.repo.blocks, new CID(Buffer.from(existingBits)))
@@ -109,7 +109,7 @@ export class StellarBack {
         const hsh = did.split(':')[2] // comes in the format did:stellar:${trans-id}
         const genesisTrans = await server.transactions().transaction(hsh).call()
 
-        let tree:PolicyTree
+        let tree: PolicyTree
         const localTree = await this.getLocal(did)
         if (localTree) {
             tree = localTree
@@ -117,9 +117,9 @@ export class StellarBack {
             const mp = await this.transactionToHashMap(genesisTrans)
             tree = new PolicyTree(this.repo.blocks, mp.cid)
         }
-        
+
         const latest = await tree.lastTransitionSet()
-        
+
         const pagingToken = latest ? latest.metadata['pagingToken'] : genesisTrans.paging_token
 
         const transactions = await server.transactions().forAccount(publicKey).includeFailed(false).cursor(pagingToken).call()
@@ -132,35 +132,39 @@ export class StellarBack {
         // don't know why but the type says val is a buffer, but it's actually coming back a a string
         const siaUrl = Buffer.from(((rec.value as unknown) as string), 'base64').toString('utf-8')
         const mpBits = await downloadFile(siaUrl)
-        return await deserialize(this.repo.blocks, mpBits)
+        return deserialize(this.repo.blocks, mpBits)
     }
 
     private async playTransactions(tree: PolicyTree, did: string, transactions: ServerApi.CollectionPage<ServerApi.TransactionRecord>): Promise<PolicyTree> {
-        const transitions:Transition[] = []
-        
-        for (const tran of transactions.records) {
-            const mp = await this.transactionToHashMap(tran)
-            const transition = await mp.get(did)
-            transitions.push(transition)
-        }
 
-        if (transitions.length === 0) {
+        if (transactions.records.length === 0) {
             return tree
         }
 
-        const lastTransaction = transactions.records[transactions.records.length-1]
-        const highestBlock = lastTransaction.ledger_attr
-        const pagingToken = lastTransaction.paging_token
+        const transitionsByBlockHeight: { [key: number]: Transition[] } = {}
 
-        const set = new TransitionSet({
-            source: "stellar", 
-            height: highestBlock, 
-            transitions: transitions,
-            metadata: {
-                pagingToken: pagingToken,
-            }
+        for (const tran of transactions.records) {
+            const mp = await this.transactionToHashMap(tran)
+            const transition = await mp.get(did)
+            let existing = transitionsByBlockHeight[tran.ledger_attr]
+            existing = existing || []
+            existing.push(transition)
+            transitionsByBlockHeight[tran.ledger_attr] = existing
+        }
+
+        const sortedKeys = Object.keys(transitionsByBlockHeight).sort((a: string, b: string) => parseInt(a, 10) - parseInt(b, 10)).map((k) => parseInt(k, 10))
+
+        const sets = sortedKeys.map((key: number) => {
+            return new TransitionSet({
+                source: "stellar",
+                height: key,
+                transitions: transitionsByBlockHeight[key],
+            })
         })
-        await tree.applySet(set)
+
+        for (let set of sets) {
+            await tree.applySet(set)
+        }
 
         if (transactions.records.length > 0) {
             return this.playTransactions(tree, did, (await transactions.next()))

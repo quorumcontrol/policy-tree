@@ -49,6 +49,7 @@ interface HashMap {
     store: IBlockStore
     get:(key:string)=>Promise<any>
     cids:()=>AsyncIterable<CID>
+    values:()=>AsyncIterable<any>
 }
 
 function blockToBuffer(blk: IBlock) {
@@ -65,10 +66,20 @@ export const serialize = async (hshMap: HashMap, store:IBlockStore) => {
     let buf = cidToBuffer(hshMap.cid)
     const cids = hshMap.cids()
 
-    for await (let cid of cids) {
+    for await (const cid of cids) {
         const blk = await store.get(cid)
         buf = Buffer.concat([buf, blockToBuffer(blk)])
     }
+
+    const vals = hshMap.values()
+
+    for await (const val of vals) {
+        if (CID.isCID(val)) {
+            const blk = await store.get(val)
+            buf = Buffer.concat([buf, blockToBuffer(blk)])
+        }
+    }
+
     return buf
 }
 
