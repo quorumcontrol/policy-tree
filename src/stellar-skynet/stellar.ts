@@ -1,5 +1,5 @@
-import StellarSdk, { Operation, Server, TransactionBuilder, ServerApi } from 'stellar-sdk'
-import { GenesisOptions, PolicyTree } from '../policytree';
+import StellarSdk, { Operation, Server, TransactionBuilder, ServerApi, Horizon, Asset, Memo } from 'stellar-sdk'
+import { GenesisOptions, PolicyTree, MESSAGE_ACCOUNT_KEY } from '../policytree';
 import { makeBlock } from '../repo/block';
 import Repo, { Key } from '../repo/datastore';
 import CID from 'cids';
@@ -12,9 +12,6 @@ const HashMap = require('../hashmap')
 
 const log = debug('stellar')
 
-const publicKey = 'GBE3HUH4YAWYOUU4NISEIRAUVTXCUZUBMD6FPDSOHDWGGJEJJBH22TMD'
-const priKey = 'SBZGFEQ2HN7TLPZTD4QJLVPBYF64R532UYDF2TYX5U74QT6GI2Z6ULQM'
-
 export const server = new Server('https://horizon-testnet.stellar.org');
 const feePromise = server.fetchBaseFee();
 
@@ -22,24 +19,34 @@ function siaUrlToBuf(url: string) {
     return Buffer.from(url, 'utf-8')
 }
 
-function bufToSiaUrl(buf: Buffer) {
-    return buf.toString('utf-8')
+// function bufToSiaUrl(buf: Buffer) {
+//     return buf.toString('utf-8')
+// }
+
+interface KeySet {
+    publicKey:string
+    privateKey:string
 }
 
 export class StellarBack {
     repo: Repo
+    privateKey:string
+    publicKey:string
 
-    constructor(repo: Repo) {
+    constructor(repo: Repo, keys:KeySet) {
         this.repo = repo
+        this.privateKey = keys.privateKey
+        this.publicKey = keys.publicKey
     }
 
-    async createAsset(genesis: GenesisOptions) {
-        const account = await server.loadAccount(publicKey);
+    async createAsset(genesis: GenesisOptions): Promise<[string, Horizon.SubmitTransactionResponse]> {
+        const account = await server.loadAccount(this.publicKey);
         const fee = await feePromise
 
-        const blk = await makeBlock(genesis)
-        await this.repo.blocks.put(blk)
-        const siaUrl = await uploadBuffer(blk.data)
+        const hshMp = await HashMap.create(this.repo.blocks)
+        await hshMp.set('genesis', genesis)
+
+        const siaUrl = await uploadBuffer(await serialize(hshMp, this.repo.blocks))
         log("siaUrl: ", siaUrl)
 
         const treeP = PolicyTree.create(this.repo.blocks, genesis)
@@ -52,25 +59,62 @@ export class StellarBack {
             .build();
 
         // sign the transaction
-        transaction.sign(StellarSdk.Keypair.fromSecret(priKey));
+        transaction.sign(StellarSdk.Keypair.fromSecret(this.privateKey));
 
         try {
             const trans = await server.submitTransaction(transaction);
             const did = `did:stellar:${trans.hash}`
             const tree = await treeP
             await this.repo.datastore.put(new Key(did), (await tree.tip()).buffer)
-            return did
+            return [did, trans]
         } catch (err) {
             console.error(err);
+            throw (err)
         }
     }
 
-    async transitionAsset(did: string, trans: Transition) {
-        const account = await server.loadAccount(publicKey);
+    /**
+     * messageAsset is a two step process. First, create a transaction with the transition you want
+     * and then send a transaction to the assets message queue account with a data item of the transition.
+     * @param did 
+     * @param trans 
+     */
+    async messageAsset(did: string, trans: Transition) {
+        const tree = await this.getAsset(did)
+        const messageQueueAccount = await tree.get(MESSAGE_ACCOUNT_KEY)
+        if (!messageQueueAccount) {
+            throw new Error("asset must allow messaging")
+        }
+
+        const account = await server.loadAccount(this.publicKey);
         const fee = await feePromise
 
-        // const transBlock = await makeBlock(trans)
-        // await this.repo.blocks.put(transBlock)
+        // first we create a transition to the asset in our *own* account
+        const resp = await this.transitionAsset(did, trans)
+
+        // then we send the tiniest amount of XLM we can to the message account
+        // TODO: the asset should define minimum amounts
+        // and in the memo field we point at the transition we made above.
+
+        const transaction = new TransactionBuilder(account, { fee: fee.toString(10), networkPassphrase: StellarSdk.Networks.TESTNET })
+            .addOperation(
+                Operation.payment({
+                    destination: messageQueueAccount,
+                    amount: "0.0000001",
+                    asset: Asset.native(),
+                })
+            ).addMemo(Memo.hash(resp?.hash))
+            .setTimeout(30)
+            .build();
+
+        // sign the transaction
+        transaction.sign(StellarSdk.Keypair.fromSecret(this.privateKey));
+        return server.submitTransaction(transaction)
+    }
+
+    async transitionAsset(did: string, trans: Transition) {
+        const account = await server.loadAccount(this.publicKey);
+        const fee = await feePromise
 
         const hshMp = await HashMap.create(this.repo.blocks)
         await hshMp.set(did, trans)
@@ -86,23 +130,30 @@ export class StellarBack {
             .build();
 
         // sign the transaction
-        transaction.sign(StellarSdk.Keypair.fromSecret(priKey));
+        transaction.sign(StellarSdk.Keypair.fromSecret(this.privateKey));
 
         try {
             const transactionResponse = await server.submitTransaction(transaction);
             log('transition: ', trans, ' transaction: ', transactionResponse)
-            return true
+            return transactionResponse
         } catch (err) {
             console.error(err);
+            throw new Error(err)
         }
     }
 
     private async getLocal(did: string) {
-        const existingBits = await this.repo.datastore.get(new Key(did))
-        if (existingBits) {
-            return new PolicyTree(this.repo.blocks, new CID(Buffer.from(existingBits)))
+        let existingBits:Uint8Array
+        try {
+            existingBits = await this.repo.datastore.get(new Key(did))
+        } catch(err) {
+            if (!(err as Error).message.includes('Not Found')) {
+                throw err
+            }
+            return null
         }
-        return null
+         
+        return new PolicyTree(this.repo.blocks, new CID(Buffer.from(existingBits)))
     }
 
     async getAsset(did: string) {
@@ -115,24 +166,38 @@ export class StellarBack {
             tree = localTree
         } else {
             const mp = await this.transactionToHashMap(genesisTrans)
-            tree = new PolicyTree(this.repo.blocks, mp.cid)
+            const genesis = await mp.get('genesis')
+            tree = await PolicyTree.create(this.repo.blocks, genesis)
         }
 
-        const latest = await tree.lastTransitionSet()
+        // const latest = await tree.lastTransitionSet()
 
-        const pagingToken = latest ? latest.metadata['pagingToken'] : genesisTrans.paging_token
+        // const pagingToken = latest ? latest.metadata['pagingToken'] : genesisTrans.paging_token
 
-        const transactions = await server.transactions().forAccount(publicKey).includeFailed(false).cursor(pagingToken).call()
+        const transactions = await server.transactions().forAccount(genesisTrans.source_account).includeFailed(false).limit(100).cursor(genesisTrans.paging_token).call()
         return this.playTransactions(tree, did, transactions)
     }
 
-    private async transactionToHashMap(trans: ServerApi.TransactionRecord) {
+    private async transactionToHashMap(trans: ServerApi.TransactionRecord):Promise<typeof HashMap|null> {
         const operations = await trans.operations()
-        const rec = (operations.records[0] as ServerApi.ManageDataOperationRecord)
-        // don't know why but the type says val is a buffer, but it's actually coming back a a string
-        const siaUrl = Buffer.from(((rec.value as unknown) as string), 'base64').toString('utf-8')
-        const mpBits = await downloadFile(siaUrl)
-        return deserialize(this.repo.blocks, mpBits)
+
+        for (const operation of operations.records) {
+            if (operation.type == 'manage_data' && (operation.name === "tupelo")) {
+                // don't know why but the type says val is a buffer, but it's actually coming back a a string
+                const siaUrl = Buffer.from(((operation.value as unknown) as string), 'base64').toString('utf-8')
+                const mpBits = await downloadFile(siaUrl)
+                return deserialize(this.repo.blocks, mpBits)
+            }
+
+            if (operation.type === 'payment' && trans.memo) {
+                const transPointedTo = await server.transactions().transaction(trans.memo).call()
+                return this.transactionToHashMap(transPointedTo)
+            }
+        }
+
+        return null
+
+        
     }
 
     private async playTransactions(tree: PolicyTree, did: string, transactions: ServerApi.CollectionPage<ServerApi.TransactionRecord>): Promise<PolicyTree> {
@@ -146,6 +211,8 @@ export class StellarBack {
         for (const tran of transactions.records) {
             const mp = await this.transactionToHashMap(tran)
             const transition = await mp.get(did)
+            transition.sender = tran.source_account
+
             let existing = transitionsByBlockHeight[tran.ledger_attr]
             existing = existing || []
             existing.push(transition)

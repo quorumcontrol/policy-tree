@@ -67,6 +67,25 @@ describe('HashMap', ()=> {
         await newRepo.close()
     })
 
+    it('serializes with objects that have CIDs', async ()=> {
+        const map = await HashMap.create(repo.blocks)
+        const subObj = await makeBlock({sub:true})
+        await repo.blocks.put(subObj)
+
+        await map.set("test", {test: subObj.cid})
+
+        const serialized = await serialize(map, repo.blocks)
+        expect(serialized.byteLength).to.be.greaterThan(50)
+
+        const newRepo = await openedMemoryRepo('deserialized')
+        const deserialized = await deserialize(newRepo.blocks, serialized)
+
+        expect((await deserialized.get(`test`)).test.toString()).to.equal(subObj.cid.toString())
+        expect(await newRepo.blocks.get(subObj.cid)).to.not.be.undefined
+
+        await newRepo.close()
+    })
+
     it('sets, deeply', async ()=> {
         const blk = await makeBlock({test: true})
         const map = await HashMap.create(repo.blocks)

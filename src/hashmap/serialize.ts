@@ -77,6 +77,14 @@ export const serialize = async (hshMap: HashMap, store:IBlockStore) => {
         if (CID.isCID(val)) {
             const blk = await store.get(val)
             buf = Buffer.concat([buf, blockToBuffer(blk)])
+            continue
+        }
+        // if this is an object
+        for (const internalValue of Object.values<any>(val)) {
+            if (CID.isCID(internalValue)) {
+                const blk = await store.get(internalValue)
+                buf = Buffer.concat([buf, blockToBuffer(blk)])
+            }
         }
     }
 

@@ -36,6 +36,7 @@ interface PolicyResponse {
 export interface GenesisOptions {
     policy?: CID
     messageAccount?:string
+    initialOwner?: string
     metadata?:any
 }
 
@@ -44,6 +45,8 @@ type BlockStore = any
 
 const POLICY_KEY = "/policy"
 const GENESIS_KEY = "/genesis"
+const OWNERSHIP_KEY = "/owners"
+export const MESSAGE_ACCOUNT_KEY = "/message_account"
 
 type PolicyInput = Transition & {
     keys?: {[key:string]:any}
@@ -60,6 +63,8 @@ export class PolicyTree {
         const tree = new PolicyTree(store)
         await tree.set(GENESIS_KEY, opts)
         await tree.set(POLICY_KEY, opts.policy)
+        await tree.set(OWNERSHIP_KEY, opts.initialOwner ? [opts.initialOwner] : [])
+        await tree.set(MESSAGE_ACCOUNT_KEY, opts.messageAccount)
         return tree
     }
 
