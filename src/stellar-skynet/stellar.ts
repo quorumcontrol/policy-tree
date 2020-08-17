@@ -86,7 +86,7 @@ export class StellarBack {
             throw new Error("asset must allow messaging")
         }
 
-        const account = await server.loadAccount(this.publicKey);
+        let account = await server.loadAccount(this.publicKey);
         const fee = await feePromise
 
         // first we create a transition to the asset in our *own* account
@@ -95,12 +95,15 @@ export class StellarBack {
         // then we send the tiniest amount of XLM we can to the message account
         // TODO: the asset should define minimum amounts
         // and in the memo field we point at the transition we made above.
+        // redo this fetch for the sequence
+        account.incrementSequenceNumber()
 
+        log("building messaging transaction: ")
         const transaction = new TransactionBuilder(account, { fee: fee.toString(10), networkPassphrase: StellarSdk.Networks.TESTNET })
             .addOperation(
                 Operation.payment({
                     destination: messageQueueAccount,
-                    amount: "0.0000001",
+                    amount: "1",
                     asset: Asset.native(),
                 })
             ).addMemo(Memo.hash(resp?.hash))
@@ -109,6 +112,7 @@ export class StellarBack {
 
         // sign the transaction
         transaction.sign(StellarSdk.Keypair.fromSecret(this.privateKey));
+        log("submitting transaction: ", transaction)
         return server.submitTransaction(transaction)
     }
 
@@ -116,12 +120,13 @@ export class StellarBack {
         const account = await server.loadAccount(this.publicKey);
         const fee = await feePromise
 
+        log("transitioning asset: ", did, trans)
         const hshMp = await HashMap.create(this.repo.blocks)
         await hshMp.set(did, trans)
 
         const buf = await serialize(hshMp, this.repo.blocks)
         const siaUrl = await uploadBuffer(buf)
-
+        log("uploaded serialized hashmap: ", siaUrl)
         const transaction = new TransactionBuilder(account, { fee: fee.toString(10), networkPassphrase: StellarSdk.Networks.TESTNET })
             .addOperation(
                 Operation.manageData({ name: "tupelo", value: siaUrlToBuf(siaUrl) })
@@ -170,8 +175,6 @@ export class StellarBack {
             tree = await PolicyTree.create(this.repo.blocks, genesis)
         }
 
-        // const latest = await tree.lastTransitionSet()
-
         // const pagingToken = latest ? latest.metadata['pagingToken'] : genesisTrans.paging_token
 
         const transactions = await server.transactions().forAccount(genesisTrans.source_account).includeFailed(false).limit(100).cursor(genesisTrans.paging_token).call()
@@ -189,26 +192,36 @@ export class StellarBack {
                 return deserialize(this.repo.blocks, mpBits)
             }
 
-            if (operation.type === 'payment' && trans.memo) {
-                const transPointedTo = await server.transactions().transaction(trans.memo).call()
+            // if this operation is a payment, then it is a message to the asset and we will follow the pointer.
+            if (operation.type === 'payment' && trans.memo_type === 'hash') {
+                log("payment operation from: ", operation.from, ' following from transaction: ', trans)
+                const transPointedTo = await server.transactions().transaction(Buffer.from(trans.memo!, 'base64').toString('hex')).call()
                 return this.transactionToHashMap(transPointedTo)
             }
+
+            console.error("unknown operation type: ", operation.type, operation)
         }
 
         return null
-
-        
     }
 
     private async playTransactions(tree: PolicyTree, did: string, transactions: ServerApi.CollectionPage<ServerApi.TransactionRecord>): Promise<PolicyTree> {
-
+        // if we have no transactions here it means we've reached the end of paging
         if (transactions.records.length === 0) {
             return tree
         }
+        // get the latest and if the latest exists than make sure these transactions are greater 
+        const latest = await tree.lastTransitionSet()
+
+        // go through all the transactions and if none of them are more recent, just move onto the next one
 
         const transitionsByBlockHeight: { [key: number]: Transition[] } = {}
 
         for (const tran of transactions.records) {
+            if (latest && tran.ledger_attr <= latest.height ) {
+                // if this transaction has already been included, we can skip it
+                continue
+            }
             const mp = await this.transactionToHashMap(tran)
             const transition = await mp.get(did)
             transition.sender = tran.source_account
@@ -233,12 +246,8 @@ export class StellarBack {
             await tree.applySet(set)
         }
 
-        if (transactions.records.length > 0) {
-            return this.playTransactions(tree, did, (await transactions.next()))
-        }
-
         await this.repo.datastore.put(new Key(did), (await tree.tip()).buffer)
 
-        return tree
+        return this.playTransactions(tree, did, (await transactions.next()))
     }
 }

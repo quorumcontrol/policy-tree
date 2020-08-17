@@ -62,11 +62,14 @@ describe('stellar', ()=> {
         const bobRepo = await openedMemoryRepo('stellar-bob')
         try {
             const block = await makeBlock(setDataBytes)
-            await repo.blocks.put(block)
+            await repo.blocks.put(block) // notice that we don't put the policy into bob's repo, he'll get it from the asset
             const aliceStellar = new StellarBack(repo, aliceKeys)
             const bobStellar = new StellarBack(bobRepo, bobKeys)
 
-            const [did,] = await aliceStellar.createAsset({ policy: block.cid })
+            const [did,] = await aliceStellar.createAsset({ 
+                policy: block.cid,
+                messageAccount: aliceKeys.publicKey,
+            })
             if (!did) {
                 throw new Error("no did returned")
             }
@@ -82,12 +85,28 @@ describe('stellar', ()=> {
                 }
             })
 
+            console.log("messaging")
+            try {
+                await bobStellar.messageAsset(did, {
+                    type: 'setdata',
+                    metadata: {
+                        'key': 'bob',
+                        'value': 'setthis'
+                    }
+                })
+            } catch(err) {
+                console.error("error messaging: ", err, "extras: ", err.response.data.extras)
+                throw err
+            }
+            
+            console.log("after messaging")
 
-    
+            // sanity check that a blank bob has worked
             tree = await bobStellar.getAsset(did)
             expect(await tree.lastTransitionSet()).to.be.not.be.null
     
             expect((await tree.get('hi'))).to.equal('hi')
+            expect((await tree.get('bob'))).to.equal('setthis')
 
 
         } catch(err) {
