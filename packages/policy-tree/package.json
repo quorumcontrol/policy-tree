@@ -15,6 +15,7 @@
     "bit-sequence": "^1.0.0",
     "debug": "^4.1.1",
     "form-data": "^3.0.0",
+    "iamap": "^0.7.0",
     "interface-datastore": "^2.0.0",
     "ipfs-repo": "^6.0.1",
     "ipld-block": "^0.10.0",
@@ -35,9 +36,11 @@
     "@types/url-join": "^4.0.0",
     "@types/varint": "^5.0.0",
     "chai": "^4.2.0",
+    "jsdoc": "^3.6.5",
     "mocha": "^8.1.1",
     "rimraf": "^3.0.2",
     "ts-node": "^8.10.2",
+    "tsd-jsdoc": "^2.5.0",
     "typescript": "^3.9.7",
     "url-join": "^4.0.1"
   }

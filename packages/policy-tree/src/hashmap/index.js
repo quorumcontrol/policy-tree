@@ -1,4 +1,4 @@
-const IAMap = require('../iamap/index')
+const IAMap = require('../iamapold/index')
 const CID = require('cids')
 const Block = require('@ipld/block/defaults.js')
 const IpldBlock = require('ipld-block')
