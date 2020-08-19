@@ -6,9 +6,7 @@ import CID from 'cids';
 import { Transition, TransitionSet } from '../transitionset';
 import debug from 'debug';
 import { uploadBuffer, downloadFile } from './skynet';
-import { serialize, deserialize } from '../hashmap/serialize';
-
-const HashMap = require('../hashmap')
+import { HashMap, serialize, deserialize } from '../hashmap';
 
 const log = debug('stellar')
 
@@ -181,7 +179,7 @@ export class StellarBack {
         return this.playTransactions(tree, did, transactions)
     }
 
-    private async transactionToHashMap(trans: ServerApi.TransactionRecord):Promise<typeof HashMap|null> {
+    private async transactionToHashMap(trans: ServerApi.TransactionRecord):Promise<HashMap|null> {
         const operations = await trans.operations()
 
         for (const operation of operations.records) {

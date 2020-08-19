@@ -85,7 +85,6 @@ describe('stellar', ()=> {
                 }
             })
 
-            console.log("messaging")
             try {
                 await bobStellar.messageAsset(did, {
                     type: 'setdata',
@@ -99,8 +98,6 @@ describe('stellar', ()=> {
                 throw err
             }
             
-            console.log("after messaging")
-
             // sanity check that a blank bob has worked
             tree = await bobStellar.getAsset(did)
             expect(await tree.lastTransitionSet()).to.be.not.be.null

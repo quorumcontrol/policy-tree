@@ -2,8 +2,7 @@ import CID from "cids"
 import { IBlockStore } from '../repo/datastore'
 import { IBlock, blockFromBits } from "../repo/block"
 import varint from 'varint'
-
-const HashMap = require('./index')
+import {HashMap} from './hashmap'
 
 function bufferReader(buf: Buffer) {
     let pos = 0
@@ -42,14 +41,6 @@ async function readVarint(reader: any) {
     const i = varint.decode(bytes)
     reader.seek(varint.decode.bytes)
     return i
-}
-
-interface HashMap {
-    cid: CID
-    store: IBlockStore
-    get:(key:string)=>Promise<any>
-    cids:()=>AsyncIterable<CID>
-    values:()=>AsyncIterable<any>
 }
 
 function blockToBuffer(blk: IBlock) {

@@ -3,12 +3,12 @@ import { makeBlock, IBlock, decodeBlock } from './repo/block'
 import Policy from './policy'
 import debug from 'debug'
 import {Transition, TransitionSet,CanonicalTransitionSet} from './transitionset'
+import {HashMap} from './hashmap'
 
 const log = debug("PolicyTree")
 
 export const notAllowedErr = "TRANSACTION_NOT_ALLOWED"
 
-const HashMap = require('./hashmap')
 // A PolicyTree is a state machine. It starts from a genesis state that defines rules,
 // then TransitionSets are played on top of the tree which modify the tree based on that
 // genesis policy.

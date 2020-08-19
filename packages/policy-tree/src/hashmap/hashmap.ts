@@ -11,7 +11,6 @@ function murmur332Hasher(key:Buffer) {
     b.writeUInt32LE(murmurhash3.x86.hash32(key))
     return b
 }
-const DEFAULT_BLOCK_CODEC = 'dag-cbor'
 const DEFAULT_HASH_ALGORITHM = 'murmur3-32'
 const DEFAULT_HASHER = murmur332Hasher
 const DEFAULT_HASH_BYTES = 32
@@ -50,6 +49,7 @@ interface IAMapInstance {
 }
 
 function blockStoreToIaMapStore(store:IBlockStore) {
+    // do a bit of manipulation on loaded nodes as iamap expects a Buffer and decodeBlock is returning Uint8Array
     return {
         async load(cid:CID) {
             const ipldBlk = await store.get(cid)
@@ -108,6 +108,10 @@ export class HashMap {
 
     async set(key:string,value:any) {
         this.iamap = await this.iamap.set(key,value)
+    }
+
+    async delete(key:string) {
+        this.iamap = await this.iamap.delete(key)
     }
 
     get(key:string) {
