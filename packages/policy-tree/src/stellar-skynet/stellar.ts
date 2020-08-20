@@ -1,4 +1,4 @@
-import StellarSdk, { Operation, Server, TransactionBuilder, ServerApi, Horizon, Asset, Memo } from 'stellar-sdk'
+import StellarSdk, { Operation, Server, TransactionBuilder, ServerApi, Horizon, Asset, Memo, xdr } from 'stellar-sdk'
 import { GenesisOptions, PolicyTree, MESSAGE_ACCOUNT_KEY } from '../policytree';
 import { makeBlock } from '../repo/block';
 import Repo, { Key } from '../repo/datastore';
@@ -180,24 +180,36 @@ export class StellarBack {
     }
 
     private async transactionToHashMap(trans: ServerApi.TransactionRecord):Promise<HashMap|null> {
-        const operations = await trans.operations()
+        const envelope = xdr.TransactionEnvelope.fromXDR(trans.envelope_xdr, 'base64')
 
-        for (const operation of operations.records) {
-            if (operation.type == 'manage_data' && (operation.name === "tupelo")) {
-                // don't know why but the type says val is a buffer, but it's actually coming back a a string
-                const siaUrl = Buffer.from(((operation.value as unknown) as string), 'base64').toString('utf-8')
-                const mpBits = await downloadFile(siaUrl)
-                return deserialize(this.repo.blocks, mpBits)
+        const operations = envelope.v1().tx().operations()
+
+        for (const op of operations) {
+            switch(op.body().switch().name) {
+                case 'manageDatum':
+                    {
+                        const operation = op.body().manageDataOp()
+                        if (Buffer.from(operation.dataName()).toString() === 'tupelo') {
+                            // don't know why but the type says val is a buffer, but it's actually coming back a a string
+                            const siaUrl = operation.dataValue().toString('utf-8')
+                            const mpBits = await downloadFile(siaUrl)
+                            return deserialize(this.repo.blocks, mpBits)
+                        }
+                    }
+                    break;
+                case 'payment':
+                    {
+                        const operation = op.body().paymentOp()
+                        if (trans.memo_type === 'hash') {
+                            log("payment operation from: ", trans.source_account, ' following from transaction: ', trans)
+                            const transPointedTo = await server.transactions().transaction(Buffer.from(trans.memo!, 'base64').toString('hex')).call()
+                            return this.transactionToHashMap(transPointedTo)
+                        }
+                    }
+                    break;
+                default:
+                    console.error("unknown operation type: ", op.body().switch().name)
             }
-
-            // if this operation is a payment, then it is a message to the asset and we will follow the pointer.
-            if (operation.type === 'payment' && trans.memo_type === 'hash') {
-                log("payment operation from: ", operation.from, ' following from transaction: ', trans)
-                const transPointedTo = await server.transactions().transaction(Buffer.from(trans.memo!, 'base64').toString('hex')).call()
-                return this.transactionToHashMap(transPointedTo)
-            }
-
-            console.error("unknown operation type: ", operation.type, operation)
         }
 
         return null

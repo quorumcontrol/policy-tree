@@ -20,8 +20,8 @@ const memRepoOpts = {
     lock: memoryLock,
 }
 
-describe('memory repo', ()=> {
-    it('works', async ()=> {
+describe('repo', ()=> {
+    it('memory repo works', async ()=> {
         const repo = new IpfsRepo('sanity/memory', memRepoOpts)
         await repo.init({})
         await repo.open()
@@ -32,6 +32,26 @@ describe('memory repo', ()=> {
         const retVal = await repo.datastore.get(key)
         expect(retVal.toString('hex')).to.equal(val.toString('hex'))
         await repo.close()
+    })
+
+    it.skip('performs', async ()=> {
+        const repo = new IpfsRepo('sanity/perf', memRepoOpts)
+        await repo.init({})
+        await repo.open()
+
+        const iterations = 1000
+
+        const startTime = process.hrtime()
+        for (let i=0; i < iterations; i++) {
+            await repo.datastore.put(`key-${i}`, 'hi')
+        }
+        const endTime = process.hrtime()
+        console.log("took: ", endTime[0] - startTime[0])
+
+        for (let i=0; i < iterations; i++) {
+            expect(await repo.datastore.get(`key-${i}`)).to.equal('hi')
+        }
+
     })
     
 })

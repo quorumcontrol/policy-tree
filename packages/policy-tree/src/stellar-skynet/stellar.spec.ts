@@ -5,6 +5,7 @@ import { openedMemoryRepo } from '../repo'
 import Repo from '../repo/datastore'
 import fs from 'fs'
 import { makeBlock } from '../repo/block'
+import process from 'process'
 
 const setDataBytes = fs.readFileSync('policies/default/setdata/setdata.wasm')
 
@@ -17,7 +18,6 @@ const bobKeys = {
     publicKey: 'GCCYWPBKXL2OABFNFXZZ7VS4NXWW5RNTHOVV5YW4ECVGHXUJX3O2QG4E',
     privateKey: 'SD7UNC7BX3JIYTYS66UDNOK4YUPGYM5ZHB2GB7LW6BTJFWILZPP67CRF'
 }
-
 
 describe('stellar', ()=> {
 
@@ -57,6 +57,44 @@ describe('stellar', ()=> {
 
         expect((await tree.get('hi'))).to.equal('hi')
     })
+
+    it.skip('does 100 updates', async ()=> {
+        const block = await makeBlock(setDataBytes)
+        await repo.blocks.put(block)
+
+        const stellar = new StellarBack(repo, aliceKeys)
+
+        const [did,] = await stellar.createAsset({ policy: block.cid })
+        if (!did) {
+            throw new Error("no did returned")
+        }
+
+        let tree = await stellar.getAsset(did)
+        expect(await tree.lastTransitionSet()).to.be.null
+        
+        const iterations = 50
+
+        for (let i = 0; i < iterations; i++) {
+            await stellar.transitionAsset(did, {
+                type: 'setdata',
+                metadata: {
+                    'key': `hi${i}`,
+                    'value': `hi${i}`
+                }
+            })
+            console.log(`iteration: ${i}: ${process.hrtime()[0]}`)
+        }
+
+        const start = process.hrtime()
+        tree = await stellar.getAsset(did)
+        const endTime = process.hrtime()
+
+        console.log('recreation: ', endTime[0] - start[0])
+
+        expect(await tree.lastTransitionSet()).to.be.not.be.null
+
+        expect((await tree.get('hi1'))).to.equal('hi1')
+    }).timeout(20000000)
 
     it('messages', async ()=> {
         const bobRepo = await openedMemoryRepo('stellar-bob')
