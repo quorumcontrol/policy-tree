@@ -1,7 +1,6 @@
 import StellarSdk, { Operation, Server, TransactionBuilder, ServerApi, Horizon, Asset, Memo, xdr } from 'stellar-sdk'
 import { GenesisOptions, PolicyTree, MESSAGE_ACCOUNT_KEY } from '../policytree';
-import { makeBlock } from '../repo/block';
-import Repo, { Key } from '../repo/datastore';
+import Repo, { Key } from '../repo/repo';
 import CID from 'cids';
 import { Transition, TransitionSet } from '../transitionset';
 import debug from 'debug';

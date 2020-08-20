@@ -1,5 +1,5 @@
 import CID from "cids"
-import { IBlockStore } from "../repo/datastore"
+import { IBlockStore } from "../repo/repo"
 import { decodeBlock, makeBlock } from "../repo/block"
 
 const IAMap = require('iamap')

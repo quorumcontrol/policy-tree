@@ -1,6 +1,5 @@
-import Repo from "./datastore"
+import Repo from "./repo"
 
-const IpfsRepo = require('ipfs-repo')
 const MemoryStore = require('interface-datastore').MemoryDatastore
 const memoryLock = require('ipfs-repo/src/lock-memory')
 

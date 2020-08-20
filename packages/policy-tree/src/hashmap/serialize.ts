@@ -1,5 +1,5 @@
 import CID from "cids"
-import { IBlockStore } from '../repo/datastore'
+import { IBlockStore } from '../repo/repo'
 import { IBlock, blockFromBits } from "../repo/block"
 import varint from 'varint'
 import {HashMap} from './hashmap'
