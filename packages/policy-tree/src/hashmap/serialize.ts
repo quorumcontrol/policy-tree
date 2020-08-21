@@ -49,8 +49,8 @@ function blockToBuffer(blk: IBlock) {
 }
 
 function cidToBuffer(cid: CID) {
-    let buf = Buffer.from(varint.encode(cid.buffer.length))
-    return Buffer.concat([buf, cid.buffer])
+    let buf = Buffer.from(varint.encode(cid.bytes.length))
+    return Buffer.concat([buf, Buffer.from(cid.bytes)])
 }
 
 export const serialize = async (hshMap: HashMap, store:IBlockStore) => {

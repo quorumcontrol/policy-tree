@@ -5,10 +5,10 @@ import { makeBlock } from '../repo/block'
 import {serialize,deserialize} from './serialize'
 import {HashMap} from './hashmap'
 
-describe('HashMap2', ()=> {
+describe('HashMap', ()=> {
     let repo:any
     beforeEach(async ()=> {
-        repo = await openedMemoryRepo('HashMap2/stuff')
+        repo = await openedMemoryRepo('HashMap')
     })
 
     afterEach(async ()=> {

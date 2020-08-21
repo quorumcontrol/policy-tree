@@ -22,6 +22,11 @@ describe('CborStore', ()=> {
         expect(await store.get('test')).to.equal('test')
     })
 
+    it('returns undefined for unknown get', async ()=> {
+        const store = new CborStore(repo)
+        expect(await store.get('not-set')).to.be.undefined
+    })
+
     it('namespaces', async ()=> {
         const store = new CborStore(repo, "test")
         await store.put("test", "test")

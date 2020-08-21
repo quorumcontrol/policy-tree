@@ -4,6 +4,8 @@ import Policy from './policy'
 import debug from 'debug'
 import {Transition, TransitionSet,CanonicalTransitionSet} from './transitionset'
 import {HashMap} from './hashmap'
+import Repo from './repo/repo'
+import { CborStore } from './repo/datastore'
 
 const log = debug("PolicyTree")
 
@@ -13,12 +15,12 @@ export const notAllowedErr = "TRANSACTION_NOT_ALLOWED"
 // then TransitionSets are played on top of the tree which modify the tree based on that
 // genesis policy.
 
-interface ImmutableMap {
-    cid:CID
-    set:(key:string,value:any)=>Promise<void>
-    get:<T>(key:string)=>Promise<T>
-    delete:(key:string)=>Promise<void>
-}
+// interface ImmutableMap {
+//     cid:CID
+//     set:(key:string,value:any)=>Promise<void>
+//     get:<T>(key:string)=>Promise<T>
+//     delete:(key:string)=>Promise<void>
+// }
 
 interface KeyValuePair {
     key: string
@@ -40,8 +42,6 @@ export interface GenesisOptions {
     metadata?:any
 }
 
-// for now it's any
-type BlockStore = any
 
 const POLICY_KEY = "/policy"
 const GENESIS_KEY = "/genesis"
@@ -53,47 +53,45 @@ type PolicyInput = Transition & {
 }
 
 export class PolicyTree {
-    hashMap:Promise<ImmutableMap>
-    store:BlockStore
+    repo:Repo
+    did:string
+    private kvStore:CborStore
     private policy?:Promise<Policy>
 
-    static async create(store:BlockStore, opts:GenesisOptions = {}) {
-        const genesisBlock = await makeBlock(opts)
-        store.put(genesisBlock)
-        const tree = new PolicyTree(store)
-        await tree.set(GENESIS_KEY, opts)
-        await tree.set(POLICY_KEY, opts.policy)
-        await tree.set(OWNERSHIP_KEY, opts.initialOwner ? [opts.initialOwner] : [])
-        await tree.set(MESSAGE_ACCOUNT_KEY, opts.messageAccount)
+    static async create(repo:Repo, did:string, genesis:GenesisOptions = {}) {
+        const genesisBlock = await makeBlock(genesis)
+        repo.blocks.put(genesisBlock)
+        const tree = new PolicyTree(did, repo)
+        await tree.set(GENESIS_KEY, genesis)
+        await tree.set(POLICY_KEY, genesis.policy)
+        await tree.set(OWNERSHIP_KEY, genesis.initialOwner ? [genesis.initialOwner] : [])
+        await tree.set(MESSAGE_ACCOUNT_KEY, genesis.messageAccount)
         return tree
     }
 
-    constructor(store:BlockStore,tip?:CID) {
-        this.hashMap = HashMap.create(store,tip)
-        this.store = store
+    constructor(did:string, repo:Repo) {
+        this.repo = repo
+        this.kvStore = new CborStore(this.repo, did)
     }
 
-    private async set(key:string,value:any) {
-        return (await this.hashMap).set(key,value)
+    async exists() {
+        return !!(await this.kvStore.get(GENESIS_KEY))
+    }
+
+    set(key:string,value:any) {
+        return this.kvStore.put(key,value)
     }
 
     async get<T=any>(key:string):Promise<T> {
-        return (await this.hashMap).get(key)
-    }
-
-    async tip() {
-        return (await this.hashMap).cid
+        return this.kvStore.get<T>(key)
     }
 
     async lastTransitionSet() {
-        const currentCid = await this.get('/transition-sets/current')
-        if (currentCid) {
-            const blk:IBlock = await this.store.get(currentCid)
-            const canonicalObj = await decodeBlock<CanonicalTransitionSet>(blk)
-            return TransitionSet.fromCanonical(canonicalObj)
+        const canonicalTransition = await this.get<CanonicalTransitionSet|undefined>('/transition-sets/current')
+        if (canonicalTransition) {
+            return TransitionSet.fromCanonical(canonicalTransition)
         }
-
-        return null
+        return undefined
     }
 
     async applySet(set:TransitionSet) {
@@ -118,12 +116,10 @@ export class PolicyTree {
         const setObj = await set.toCanonicalObject()
         const key = `/transition-sets/${set.height}`
         setObj.previous = key
-        const setBlock = await makeBlock(setObj)
 
-        this.store.put(setBlock)
         // we now have an updated tree, let's save some metadata
-        await this.set(`/transition-sets/current`, setBlock.cid)
-        await this.set(key, setBlock.cid)
+        await this.set(`/transition-sets/current`, setObj)
+        await this.set(key, setObj)
     }
 
     // TODO: this is never invalidated, so if a policy lets you modify a policy
@@ -133,13 +129,12 @@ export class PolicyTree {
             return this.policy
         }
         this.policy = new Promise(async (resolve) => {
-            const hshMap = await this.hashMap
-            const policyCID = await hshMap.get<CID|undefined>(POLICY_KEY)
+            const policyCID = await this.kvStore.get<CID|undefined>(POLICY_KEY)
             if (!policyCID) {
                 throw new Error("no transitions defined")
             }
 
-            const policyBlock:IBlock = await this.store.get(policyCID)
+            const policyBlock:IBlock = await this.repo.blocks.get(policyCID)
 
             resolve(new Policy(policyBlock))
         })
@@ -148,7 +143,6 @@ export class PolicyTree {
 
     // TODO: you should always use a set
     async transition(trans:Transition) {
-        const hshMap = await this.hashMap
         const policy = await this.fetchPolicy()
 
         let input:PolicyInput = {...trans}
@@ -163,7 +157,7 @@ export class PolicyTree {
         if (res.needs) {
             const valPromises:{[key:string]:Promise<any>} = {}
             for(const key of res.needs.keys) {
-                valPromises[key] = hshMap.get(key)
+                valPromises[key] = this.kvStore.get(key)
             }
             const vals:(PolicyInput["keys"]) = {}
             for(const key of res.needs.keys) {
@@ -179,7 +173,7 @@ export class PolicyTree {
         }
 
         for(const pair of res.pairs) {
-            await hshMap.set(pair.key, pair.value)
+            await this.kvStore.put(pair.key, pair.value)
             if (pair.key === POLICY_KEY) {
                 this.policy = undefined
             }

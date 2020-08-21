@@ -9,10 +9,10 @@
   "author": "",
   "license": "UNLICENSED",
   "dependencies": {
-    "@ipld/block": "^6.0.1",
     "@nebulous/skynet": "^1.1.0",
     "@open-policy-agent/opa-wasm": "github:open-policy-agent/npm-opa-wasm#master",
     "bit-sequence": "^1.0.0",
+    "cids": "^1.0.0",
     "debug": "^4.1.1",
     "form-data": "^3.0.0",
     "iamap": "^0.7.0",

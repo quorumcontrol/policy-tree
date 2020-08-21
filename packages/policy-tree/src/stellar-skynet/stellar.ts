@@ -46,8 +46,6 @@ export class StellarBack {
         const siaUrl = await uploadBuffer(await serialize(hshMp, this.repo.blocks))
         log("siaUrl: ", siaUrl)
 
-        const treeP = PolicyTree.create(this.repo.blocks, genesis)
-
         const transaction = new TransactionBuilder(account, { fee: fee.toString(10), networkPassphrase: StellarSdk.Networks.TESTNET })
             .addOperation(
                 Operation.manageData({ name: "tupelo", value: siaUrlToBuf(siaUrl) })
@@ -61,8 +59,6 @@ export class StellarBack {
         try {
             const trans = await server.submitTransaction(transaction);
             const did = `did:stellar:${trans.hash}`
-            const tree = await treeP
-            await this.repo.datastore.put(new Key(did), (await tree.tip()).buffer)
             return [did, trans]
         } catch (err) {
             console.error(err);
@@ -145,20 +141,17 @@ export class StellarBack {
     }
 
     private async getLocal(did: string) {
-        let existingBits:Uint8Array
-        try {
-            existingBits = await this.repo.datastore.get(new Key(did))
-        } catch(err) {
-            if (!(err as Error).message.includes('Not Found')) {
-                throw err
-            }
-            return null
+        const tree = new PolicyTree(did, this.repo)
+
+        if (await tree.exists()) {
+            return tree
         }
-         
-        return new PolicyTree(this.repo.blocks, new CID(Buffer.from(existingBits)))
+
+        return undefined
     }
 
     async getAsset(did: string) {
+        log("get asset: ", did)
         const hsh = did.split(':')[2] // comes in the format did:stellar:${trans-id}
         const genesisTrans = await server.transactions().transaction(hsh).call()
 
@@ -169,7 +162,7 @@ export class StellarBack {
         } else {
             const mp = await this.transactionToHashMap(genesisTrans)
             const genesis = await mp.get('genesis')
-            tree = await PolicyTree.create(this.repo.blocks, genesis)
+            tree = await PolicyTree.create(this.repo, did, genesis)
         }
 
         // const pagingToken = latest ? latest.metadata['pagingToken'] : genesisTrans.paging_token
@@ -198,7 +191,6 @@ export class StellarBack {
                     break;
                 case 'payment':
                     {
-                        const operation = op.body().paymentOp()
                         if (trans.memo_type === 'hash') {
                             log("payment operation from: ", trans.source_account, ' following from transaction: ', trans)
                             const transPointedTo = await server.transactions().transaction(Buffer.from(trans.memo!, 'base64').toString('hex')).call()
@@ -215,6 +207,7 @@ export class StellarBack {
     }
 
     private async playTransactions(tree: PolicyTree, did: string, transactions: ServerApi.CollectionPage<ServerApi.TransactionRecord>): Promise<PolicyTree> {
+        log("play transactions: ", transactions)
         // if we have no transactions here it means we've reached the end of paging
         if (transactions.records.length === 0) {
             return tree
@@ -252,10 +245,9 @@ export class StellarBack {
         })
 
         for (let set of sets) {
+            log("applying set")
             await tree.applySet(set)
         }
-
-        await this.repo.datastore.put(new Key(did), (await tree.tip()).buffer)
 
         return this.playTransactions(tree, did, (await transactions.next()))
     }

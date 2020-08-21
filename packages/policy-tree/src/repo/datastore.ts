@@ -29,7 +29,14 @@ export class CborStore {
 
     async get<T=any>(key:string):Promise<T> {
         const dKey = this.namespacedKey(key)
-        const bits = await this.datastore.get(dKey)
-        return dagCBOR.util.deserialize(bits)
+        try {
+            const bits = await this.datastore.get(dKey)
+            return dagCBOR.util.deserialize(bits)
+        } catch(err) {
+            if (err.message.includes("Not Found")) {
+                return undefined
+            }
+            throw err
+        }
     }
 }

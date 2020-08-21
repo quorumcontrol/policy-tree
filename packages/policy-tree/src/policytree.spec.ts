@@ -20,17 +20,17 @@ describe('PolicyTree', () => {
 
     it('creates', async () => {
         const block = await makeBlock(setDataBytes)
-        const tree = await PolicyTree.create(repo.blocks, { policy: block.cid })
+        const tree = await PolicyTree.create(repo, 'did:test', { policy: block.cid })
 
-        expect((await tree.get('/genesis')).policy).to.equal(block.cid)
-        expect((await tree.get('/policy'))).to.equal(block.cid)
+        expect((await tree.get('/genesis')).policy.toString()).to.equal(block.cid.toString())
+        expect((await tree.get('/policy')).toString()).to.equal(block.cid.toString())
     })
 
 
     it('transitions', async () => {
         const block = await makeBlock(setDataBytes)
         await repo.blocks.put(block)
-        const tree = await PolicyTree.create(repo.blocks, { policy: block.cid })
+        const tree = await PolicyTree.create(repo, 'did:test', { policy: block.cid })
 
         await tree.transition({
             type: 'setdata',
@@ -46,7 +46,7 @@ describe('PolicyTree', () => {
     it('works with transition sets', async () => {
         const block = await makeBlock(setDataBytes)
         await repo.blocks.put(block)
-        const tree = await PolicyTree.create(repo.blocks, { policy: block.cid })
+        const tree = await PolicyTree.create(repo, 'did:test', { policy: block.cid })
         const set = new TransitionSet({
             source: "test",
             height: 0,
@@ -68,6 +68,7 @@ describe('PolicyTree', () => {
             ]
         })
         await tree.applySet(set)
+        expect(await tree.lastTransitionSet()).to.exist
         expect((await tree.get('/hi'))).to.equal('hi')
         expect((await tree.get('/cool'))).to.equal('cool')
     })
@@ -75,7 +76,7 @@ describe('PolicyTree', () => {
     it('performs', async () => {
         const block = await makeBlock(setDataBytes)
         await repo.blocks.put(block)
-        const tree = await PolicyTree.create(repo.blocks, { policy: block.cid })
+        const tree = await PolicyTree.create(repo, 'did:test', { policy: block.cid })
 
         const trans = [{
             type: 'setdata',
@@ -112,7 +113,7 @@ describe('PolicyTree', () => {
         const needsBytes = fs.readFileSync('policies/examples/needs/needs.wasm')
         const block = await makeBlock(needsBytes)
         await repo.blocks.put(block)
-        const tree = await PolicyTree.create(repo.blocks, { policy: block.cid })
+        const tree = await PolicyTree.create(repo, 'did:test', { policy: block.cid })
 
         const set = new TransitionSet({
             source: 'test',
@@ -145,7 +146,7 @@ describe('PolicyTree', () => {
         const needsBytes = fs.readFileSync('policies/examples/needs/needs.wasm')
         const block = await makeBlock(needsBytes)
         await repo.blocks.put(block)
-        const tree = await PolicyTree.create(repo.blocks, { policy: block.cid })
+        const tree = await PolicyTree.create(repo, 'did:test', { policy: block.cid })
 
         // we haven't set the magic key (see needs.rego) so this will throw
         try {

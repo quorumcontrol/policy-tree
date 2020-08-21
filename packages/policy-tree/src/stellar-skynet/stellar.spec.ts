@@ -42,7 +42,7 @@ describe('stellar', ()=> {
         }
 
         let tree = await stellar.getAsset(did)
-        expect(await tree.lastTransitionSet()).to.be.null
+        expect(await tree.lastTransitionSet()).to.be.undefined
         
         await stellar.transitionAsset(did, {
             type: 'setdata',
@@ -53,7 +53,7 @@ describe('stellar', ()=> {
         })
 
         tree = await stellar.getAsset(did)
-        expect(await tree.lastTransitionSet()).to.be.not.be.null
+        expect(await tree.lastTransitionSet()).to.exist
 
         expect((await tree.get('hi'))).to.equal('hi')
     })
@@ -70,7 +70,7 @@ describe('stellar', ()=> {
         }
 
         let tree = await stellar.getAsset(did)
-        expect(await tree.lastTransitionSet()).to.be.null
+        expect(await tree.lastTransitionSet()).to.be.undefined
         
         const iterations = 50
 
@@ -113,7 +113,7 @@ describe('stellar', ()=> {
             }
     
             let tree = await aliceStellar.getAsset(did)
-            expect(await tree.lastTransitionSet()).to.be.null
+            expect(await tree.lastTransitionSet()).to.be.undefined
             
             await aliceStellar.transitionAsset(did, {
                 type: 'setdata',
@@ -138,11 +138,10 @@ describe('stellar', ()=> {
             
             // sanity check that a blank bob has worked
             tree = await bobStellar.getAsset(did)
-            expect(await tree.lastTransitionSet()).to.be.not.be.null
+            expect(await tree.lastTransitionSet()).to.exist
     
             expect((await tree.get('hi'))).to.equal('hi')
             expect((await tree.get('bob'))).to.equal('setthis')
-
 
         } catch(err) {
             throw err
