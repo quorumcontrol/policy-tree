@@ -44,7 +44,7 @@ export function downloadFile(skylink: string, customOptions = {}) {
     let url = makeUrl(opts.portalUrl, opts.endpointPath, skylink);
 
     return axios.get(url, { responseType: "arraybuffer" }).then((resp)=> {
-        return resp.data
+        return Buffer.from(resp.data)
     })
 }
 
@@ -60,16 +60,26 @@ export function uploadBuffer(buf: Buffer, customOptions = {}):Promise<string> {
         filepath: 'file.cbor',
         contentType: 'application/cbor',
     }
-    formData.append(opts.portalFileFieldname, buf, options);
+
+    let toUpload:Buffer|Blob = buf
+
+    const isBrowser = (typeof Blob !== 'undefined')
+
+    if (isBrowser) {
+        toUpload = new Blob([buf])
+    }
+    formData.append(opts.portalFileFieldname, toUpload, options);
 
     // Form the URL.
     const url = makeUrl(opts.portalUrl, opts.endpointPath);
     const params: { dryrun?: boolean } = {};
     if (opts.dryRun) params.dryrun = true;
 
+    const headers = isBrowser ? undefined : formData.getHeaders()
+
     return new Promise((resolve, reject) => {
         axios
-            .post(url, formData, { headers: formData.getHeaders(), params: params })
+            .post(url, formData, { params: params, headers: headers })
             .then((response) => {
                 resolve(`${uriSkynetPrefix}${response.data.skylink}`);
             })
