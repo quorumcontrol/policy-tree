@@ -13,6 +13,7 @@
     "bit-sequence": "^1.0.0",
     "cids": "^1.0.0",
     "debug": "^4.1.1",
+    "ethers": "^5.0.8",
     "form-data": "^3.0.0",
     "iamap": "^0.7.0",
     "interface-datastore": "^2.0.0",

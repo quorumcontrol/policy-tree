@@ -4,7 +4,7 @@ import Repo, { Key } from '../repo/repo';
 import CID from 'cids';
 import { Transition, TransitionSet } from '../transitionset';
 import debug from 'debug';
-import { uploadBuffer, downloadFile } from './skynet';
+import { uploadBuffer, downloadFile } from '../skynet/skynet';
 import { HashMap, serialize, deserialize } from '../hashmap';
 
 const log = debug('stellar')

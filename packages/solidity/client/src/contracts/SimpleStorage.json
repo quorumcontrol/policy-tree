@@ -1,0 +1,766 @@
+{
+  "contractName": "SimpleStorage",
+  "abi": [
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "_from",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "bytes32",
+          "name": "bloom",
+          "type": "bytes32"
+        },
+        {
+          "indexed": false,
+          "internalType": "bytes",
+          "name": "transition",
+          "type": "bytes"
+        }
+      ],
+      "name": "Transition",
+      "type": "event"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "bloom",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "bytes",
+          "name": "transition",
+          "type": "bytes"
+        }
+      ],
+      "name": "log",
+      "outputs": [],
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "metadata": "{\"compiler\":{\"version\":\"0.5.16+commit.9c3226ce\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"_from\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"bytes32\",\"name\":\"bloom\",\"type\":\"bytes32\"},{\"indexed\":false,\"internalType\":\"bytes\",\"name\":\"transition\",\"type\":\"bytes\"}],\"name\":\"Transition\",\"type\":\"event\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"bloom\",\"type\":\"bytes32\"},{\"internalType\":\"bytes\",\"name\":\"transition\",\"type\":\"bytes\"}],\"name\":\"log\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}],\"devdoc\":{\"methods\":{}},\"userdoc\":{\"methods\":{}}},\"settings\":{\"compilationTarget\":{\"/Users/tobowers/code/policy-tree/packages/solidity/contracts/SimpleStorage.sol\":\"SimpleStorage\"},\"evmVersion\":\"istanbul\",\"libraries\":{},\"optimizer\":{\"enabled\":false,\"runs\":200},\"remappings\":[]},\"sources\":{\"/Users/tobowers/code/policy-tree/packages/solidity/contracts/SimpleStorage.sol\":{\"keccak256\":\"0x430887ee4a00e5e2eaa3036bc72ed7bd0379fce78d2eb9eab8e4ea7892a6dd93\",\"urls\":[\"bzz-raw://a296edffb651c68fa4e6558baec5cf983e2b1e4b202bd2846c868ed22046b643\",\"dweb:/ipfs/QmeEHhyFS6DdRFdbXNSt1TY9G5ia3vmc9kQRSQSGYvxGnm\"]}},\"version\":1}",
+  "bytecode": "0x608060405234801561001057600080fd5b506101e9806100206000396000f3fe608060405234801561001057600080fd5b506004361061002b5760003560e01c8063d72a266514610030575b600080fd5b6100f36004803603604081101561004657600080fd5b81019080803590602001909291908035906020019064010000000081111561006d57600080fd5b82018360208201111561007f57600080fd5b803590602001918460018302840111640100000000831117156100a157600080fd5b91908080601f016020809104026020016040519081016040528093929190818152602001838380828437600081840152601f19601f8201169050808301925050505050505091929192905050506100f5565b005b3373ffffffffffffffffffffffffffffffffffffffff167f616ca504222f7ea320ad71402990a59200b4adf3a38dc8b47ea44412c6ad68a683836040518083815260200180602001828103825283818151815260200191508051906020019080838360005b8381101561017557808201518184015260208101905061015a565b50505050905090810190601f1680156101a25780820380516001836020036101000a031916815260200191505b50935050505060405180910390a2505056fea265627a7a7231582091dde7707afdb90221aa62cb170e8cd62b8af8a886261d4532fa64a3078e27f964736f6c63430005100032",
+  "deployedBytecode": "0x608060405234801561001057600080fd5b506004361061002b5760003560e01c8063d72a266514610030575b600080fd5b6100f36004803603604081101561004657600080fd5b81019080803590602001909291908035906020019064010000000081111561006d57600080fd5b82018360208201111561007f57600080fd5b803590602001918460018302840111640100000000831117156100a157600080fd5b91908080601f016020809104026020016040519081016040528093929190818152602001838380828437600081840152601f19601f8201169050808301925050505050505091929192905050506100f5565b005b3373ffffffffffffffffffffffffffffffffffffffff167f616ca504222f7ea320ad71402990a59200b4adf3a38dc8b47ea44412c6ad68a683836040518083815260200180602001828103825283818151815260200191508051906020019080838360005b8381101561017557808201518184015260208101905061015a565b50505050905090810190601f1680156101a25780820380516001836020036101000a031916815260200191505b50935050505060405180910390a2505056fea265627a7a7231582091dde7707afdb90221aa62cb170e8cd62b8af8a886261d4532fa64a3078e27f964736f6c63430005100032",
+  "sourceMap": "66:223:1:-;;;;8:9:-1;5:2;;;30:1;27;20:12;5:2;66:223:1;;;;;;;",
+  "deployedSourceMap": "66:223:1:-;;;;8:9:-1;5:2;;;30:1;27;20:12;5:2;66:223:1;;;;;;;;;;;;;;;;;;;170:117;;;;;;13:2:-1;8:3;5:11;2:2;;;29:1;26;19:12;2:2;170:117:1;;;;;;;;;;;;;;;;;;;21:11:-1;8;5:28;2:2;;;46:1;43;36:12;2:2;170:117:1;;35:9:-1;28:4;12:14;8:25;5:40;2:2;;;58:1;55;48:12;2:2;170:117:1;;;;;;100:9:-1;95:1;81:12;77:20;67:8;63:35;60:50;39:11;25:12;22:29;11:107;8:2;;;131:1;128;121:12;8:2;170:117:1;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;30:3:-1;22:6;14;1:33;99:1;93:3;85:6;81:16;74:27;137:4;133:9;126:4;121:3;117:14;113:30;106:37;;169:3;161:6;157:16;147:26;;170:117:1;;;;;;;;;;;;;;;:::i;:::-;;;252:10;241:41;;;264:5;271:10;241:41;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;23:1:-1;8:100;33:3;30:1;27:10;8:100;;;99:1;94:3;90:11;84:18;80:1;75:3;71:11;64:39;52:2;49:1;45:10;40:15;;8:100;;;12:14;241:41:1;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;170:117;;:::o",
+  "source": "// SPDX-License-Identifier: MIT\npragma solidity >=0.4.21 <0.7.0;\n\ncontract SimpleStorage {\n  event Transition(address indexed _from, bytes32 bloom, bytes transition);\n\n  function log(bytes32 bloom, bytes memory transition) public {\n    emit Transition(msg.sender, bloom, transition);\n  }\n}\n",
+  "sourcePath": "/Users/tobowers/code/policy-tree/packages/solidity/contracts/SimpleStorage.sol",
+  "ast": {
+    "absolutePath": "/Users/tobowers/code/policy-tree/packages/solidity/contracts/SimpleStorage.sol",
+    "exportedSymbols": {
+      "SimpleStorage": [
+        62
+      ]
+    },
+    "id": 63,
+    "nodeType": "SourceUnit",
+    "nodes": [
+      {
+        "id": 38,
+        "literals": [
+          "solidity",
+          ">=",
+          "0.4",
+          ".21",
+          "<",
+          "0.7",
+          ".0"
+        ],
+        "nodeType": "PragmaDirective",
+        "src": "32:32:1"
+      },
+      {
+        "baseContracts": [],
+        "contractDependencies": [],
+        "contractKind": "contract",
+        "documentation": null,
+        "fullyImplemented": true,
+        "id": 62,
+        "linearizedBaseContracts": [
+          62
+        ],
+        "name": "SimpleStorage",
+        "nodeType": "ContractDefinition",
+        "nodes": [
+          {
+            "anonymous": false,
+            "documentation": null,
+            "id": 46,
+            "name": "Transition",
+            "nodeType": "EventDefinition",
+            "parameters": {
+              "id": 45,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 40,
+                  "indexed": true,
+                  "name": "_from",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 46,
+                  "src": "110:21:1",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 39,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "110:7:1",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 42,
+                  "indexed": false,
+                  "name": "bloom",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 46,
+                  "src": "133:13:1",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bytes32",
+                    "typeString": "bytes32"
+                  },
+                  "typeName": {
+                    "id": 41,
+                    "name": "bytes32",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "133:7:1",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bytes32",
+                      "typeString": "bytes32"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 44,
+                  "indexed": false,
+                  "name": "transition",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 46,
+                  "src": "148:16:1",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bytes_memory_ptr",
+                    "typeString": "bytes"
+                  },
+                  "typeName": {
+                    "id": 43,
+                    "name": "bytes",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "148:5:1",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bytes_storage_ptr",
+                      "typeString": "bytes"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                }
+              ],
+              "src": "109:56:1"
+            },
+            "src": "93:73:1"
+          },
+          {
+            "body": {
+              "id": 60,
+              "nodeType": "Block",
+              "src": "230:57:1",
+              "statements": [
+                {
+                  "eventCall": {
+                    "argumentTypes": null,
+                    "arguments": [
+                      {
+                        "argumentTypes": null,
+                        "expression": {
+                          "argumentTypes": null,
+                          "id": 54,
+                          "name": "msg",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 77,
+                          "src": "252:3:1",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_magic_message",
+                            "typeString": "msg"
+                          }
+                        },
+                        "id": 55,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": false,
+                        "lValueRequested": false,
+                        "memberName": "sender",
+                        "nodeType": "MemberAccess",
+                        "referencedDeclaration": null,
+                        "src": "252:10:1",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_address_payable",
+                          "typeString": "address payable"
+                        }
+                      },
+                      {
+                        "argumentTypes": null,
+                        "id": 56,
+                        "name": "bloom",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 48,
+                        "src": "264:5:1",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_bytes32",
+                          "typeString": "bytes32"
+                        }
+                      },
+                      {
+                        "argumentTypes": null,
+                        "id": 57,
+                        "name": "transition",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 50,
+                        "src": "271:10:1",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_bytes_memory_ptr",
+                          "typeString": "bytes memory"
+                        }
+                      }
+                    ],
+                    "expression": {
+                      "argumentTypes": [
+                        {
+                          "typeIdentifier": "t_address_payable",
+                          "typeString": "address payable"
+                        },
+                        {
+                          "typeIdentifier": "t_bytes32",
+                          "typeString": "bytes32"
+                        },
+                        {
+                          "typeIdentifier": "t_bytes_memory_ptr",
+                          "typeString": "bytes memory"
+                        }
+                      ],
+                      "id": 53,
+                      "name": "Transition",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 46,
+                      "src": "241:10:1",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_function_event_nonpayable$_t_address_$_t_bytes32_$_t_bytes_memory_ptr_$returns$__$",
+                        "typeString": "function (address,bytes32,bytes memory)"
+                      }
+                    },
+                    "id": 58,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "kind": "functionCall",
+                    "lValueRequested": false,
+                    "names": [],
+                    "nodeType": "FunctionCall",
+                    "src": "241:41:1",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_tuple$__$",
+                      "typeString": "tuple()"
+                    }
+                  },
+                  "id": 59,
+                  "nodeType": "EmitStatement",
+                  "src": "236:46:1"
+                }
+              ]
+            },
+            "documentation": null,
+            "id": 61,
+            "implemented": true,
+            "kind": "function",
+            "modifiers": [],
+            "name": "log",
+            "nodeType": "FunctionDefinition",
+            "parameters": {
+              "id": 51,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 48,
+                  "name": "bloom",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 61,
+                  "src": "183:13:1",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bytes32",
+                    "typeString": "bytes32"
+                  },
+                  "typeName": {
+                    "id": 47,
+                    "name": "bytes32",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "183:7:1",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bytes32",
+                      "typeString": "bytes32"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 50,
+                  "name": "transition",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 61,
+                  "src": "198:23:1",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bytes_memory_ptr",
+                    "typeString": "bytes"
+                  },
+                  "typeName": {
+                    "id": 49,
+                    "name": "bytes",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "198:5:1",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bytes_storage_ptr",
+                      "typeString": "bytes"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                }
+              ],
+              "src": "182:40:1"
+            },
+            "returnParameters": {
+              "id": 52,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "230:0:1"
+            },
+            "scope": 62,
+            "src": "170:117:1",
+            "stateMutability": "nonpayable",
+            "superFunction": null,
+            "visibility": "public"
+          }
+        ],
+        "scope": 63,
+        "src": "66:223:1"
+      }
+    ],
+    "src": "32:258:1"
+  },
+  "legacyAST": {
+    "absolutePath": "/Users/tobowers/code/policy-tree/packages/solidity/contracts/SimpleStorage.sol",
+    "exportedSymbols": {
+      "SimpleStorage": [
+        62
+      ]
+    },
+    "id": 63,
+    "nodeType": "SourceUnit",
+    "nodes": [
+      {
+        "id": 38,
+        "literals": [
+          "solidity",
+          ">=",
+          "0.4",
+          ".21",
+          "<",
+          "0.7",
+          ".0"
+        ],
+        "nodeType": "PragmaDirective",
+        "src": "32:32:1"
+      },
+      {
+        "baseContracts": [],
+        "contractDependencies": [],
+        "contractKind": "contract",
+        "documentation": null,
+        "fullyImplemented": true,
+        "id": 62,
+        "linearizedBaseContracts": [
+          62
+        ],
+        "name": "SimpleStorage",
+        "nodeType": "ContractDefinition",
+        "nodes": [
+          {
+            "anonymous": false,
+            "documentation": null,
+            "id": 46,
+            "name": "Transition",
+            "nodeType": "EventDefinition",
+            "parameters": {
+              "id": 45,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 40,
+                  "indexed": true,
+                  "name": "_from",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 46,
+                  "src": "110:21:1",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 39,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "110:7:1",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 42,
+                  "indexed": false,
+                  "name": "bloom",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 46,
+                  "src": "133:13:1",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bytes32",
+                    "typeString": "bytes32"
+                  },
+                  "typeName": {
+                    "id": 41,
+                    "name": "bytes32",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "133:7:1",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bytes32",
+                      "typeString": "bytes32"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 44,
+                  "indexed": false,
+                  "name": "transition",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 46,
+                  "src": "148:16:1",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bytes_memory_ptr",
+                    "typeString": "bytes"
+                  },
+                  "typeName": {
+                    "id": 43,
+                    "name": "bytes",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "148:5:1",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bytes_storage_ptr",
+                      "typeString": "bytes"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                }
+              ],
+              "src": "109:56:1"
+            },
+            "src": "93:73:1"
+          },
+          {
+            "body": {
+              "id": 60,
+              "nodeType": "Block",
+              "src": "230:57:1",
+              "statements": [
+                {
+                  "eventCall": {
+                    "argumentTypes": null,
+                    "arguments": [
+                      {
+                        "argumentTypes": null,
+                        "expression": {
+                          "argumentTypes": null,
+                          "id": 54,
+                          "name": "msg",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 77,
+                          "src": "252:3:1",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_magic_message",
+                            "typeString": "msg"
+                          }
+                        },
+                        "id": 55,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": false,
+                        "lValueRequested": false,
+                        "memberName": "sender",
+                        "nodeType": "MemberAccess",
+                        "referencedDeclaration": null,
+                        "src": "252:10:1",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_address_payable",
+                          "typeString": "address payable"
+                        }
+                      },
+                      {
+                        "argumentTypes": null,
+                        "id": 56,
+                        "name": "bloom",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 48,
+                        "src": "264:5:1",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_bytes32",
+                          "typeString": "bytes32"
+                        }
+                      },
+                      {
+                        "argumentTypes": null,
+                        "id": 57,
+                        "name": "transition",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 50,
+                        "src": "271:10:1",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_bytes_memory_ptr",
+                          "typeString": "bytes memory"
+                        }
+                      }
+                    ],
+                    "expression": {
+                      "argumentTypes": [
+                        {
+                          "typeIdentifier": "t_address_payable",
+                          "typeString": "address payable"
+                        },
+                        {
+                          "typeIdentifier": "t_bytes32",
+                          "typeString": "bytes32"
+                        },
+                        {
+                          "typeIdentifier": "t_bytes_memory_ptr",
+                          "typeString": "bytes memory"
+                        }
+                      ],
+                      "id": 53,
+                      "name": "Transition",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 46,
+                      "src": "241:10:1",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_function_event_nonpayable$_t_address_$_t_bytes32_$_t_bytes_memory_ptr_$returns$__$",
+                        "typeString": "function (address,bytes32,bytes memory)"
+                      }
+                    },
+                    "id": 58,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "kind": "functionCall",
+                    "lValueRequested": false,
+                    "names": [],
+                    "nodeType": "FunctionCall",
+                    "src": "241:41:1",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_tuple$__$",
+                      "typeString": "tuple()"
+                    }
+                  },
+                  "id": 59,
+                  "nodeType": "EmitStatement",
+                  "src": "236:46:1"
+                }
+              ]
+            },
+            "documentation": null,
+            "id": 61,
+            "implemented": true,
+            "kind": "function",
+            "modifiers": [],
+            "name": "log",
+            "nodeType": "FunctionDefinition",
+            "parameters": {
+              "id": 51,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 48,
+                  "name": "bloom",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 61,
+                  "src": "183:13:1",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bytes32",
+                    "typeString": "bytes32"
+                  },
+                  "typeName": {
+                    "id": 47,
+                    "name": "bytes32",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "183:7:1",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bytes32",
+                      "typeString": "bytes32"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 50,
+                  "name": "transition",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 61,
+                  "src": "198:23:1",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bytes_memory_ptr",
+                    "typeString": "bytes"
+                  },
+                  "typeName": {
+                    "id": 49,
+                    "name": "bytes",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "198:5:1",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bytes_storage_ptr",
+                      "typeString": "bytes"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                }
+              ],
+              "src": "182:40:1"
+            },
+            "returnParameters": {
+              "id": 52,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "230:0:1"
+            },
+            "scope": 62,
+            "src": "170:117:1",
+            "stateMutability": "nonpayable",
+            "superFunction": null,
+            "visibility": "public"
+          }
+        ],
+        "scope": 63,
+        "src": "66:223:1"
+      }
+    ],
+    "src": "32:258:1"
+  },
+  "compiler": {
+    "name": "solc",
+    "version": "0.5.16+commit.9c3226ce.Emscripten.clang"
+  },
+  "networks": {
+    "5777": {
+      "events": {
+        "0x616ca504222f7ea320ad71402990a59200b4adf3a38dc8b47ea44412c6ad68a6": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "_from",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "internalType": "bytes32",
+              "name": "bloom",
+              "type": "bytes32"
+            },
+            {
+              "indexed": false,
+              "internalType": "bytes",
+              "name": "transition",
+              "type": "bytes"
+            }
+          ],
+          "name": "Transition",
+          "type": "event"
+        }
+      },
+      "links": {},
+      "address": "0xa137f2462683dDFaA1Bf3028d40673FD1DA168a1",
+      "transactionHash": "0x84105862882be0e32cd3abd63894700926d1d02d7edb5261711ab6887117d015"
+    }
+  },
+  "schemaVersion": "3.2.3",
+  "updatedAt": "2020-08-22T18:55:25.549Z",
+  "networkType": "ethereum",
+  "devdoc": {
+    "methods": {}
+  },
+  "userdoc": {
+    "methods": {}
+  }
+}
