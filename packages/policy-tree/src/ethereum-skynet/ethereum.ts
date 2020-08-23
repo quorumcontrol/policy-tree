@@ -34,30 +34,11 @@ export class EthereumBack {
         return [`did:eth:${resp.blockNumber}-${await sendingAddress}-${resp.hash}`]
     }
 
-    /**
-     * messageAsset is a two step process. First, create a transaction with the transition you want
-     * and then send a transaction to the assets message queue account with a data item of the transition.
-     * @param did 
-     * @param trans 
-     */
     async messageAsset(did: string, trans: Transition) {
-        const tree = await this.getAsset(did)
-        const messageQueueAccount = await tree.get(MESSAGE_ACCOUNT_KEY)
-        if (!messageQueueAccount) {
-            throw new Error("asset must allow messaging")
-        }
-
-        // first we create a transition to the asset in our *own* account
-        const resp = await this.transitionAsset(did, trans)
-
-        log("building messaging transaction: ")
-       
-        // log("submitting transaction: ", transaction)
-        // return server.submitTransaction(transaction)
+        throw new Error("unimplemented")
     }
 
     async transitionAsset(did: string, trans: Transition) {
-
         log("transitioning asset: ", did, trans)
         const hshMp = await HashMap.create(this.repo.blocks)
         await hshMp.set(did, trans)
