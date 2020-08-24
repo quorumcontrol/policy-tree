@@ -7,7 +7,7 @@ import fs from 'fs'
 import { makeBlock } from '../repo/block'
 import process from 'process'
 
-const setDataBytes = fs.readFileSync('policies/default/setdata/setdata.wasm')
+const setDataBytes = fs.readFileSync('policies/javascript/setdata.js')
 
 const aliceKeys = {
     publicKey: 'GBE3HUH4YAWYOUU4NISEIRAUVTXCUZUBMD6FPDSOHDWGGJEJJBH22TMD',

@@ -25,7 +25,8 @@
     "multicodec": "^2.0.0",
     "murmurhash3js-revisited": "^3.0.0",
     "stellar-sdk": "^5.0.4",
-    "varint": "^5.0.0"
+    "varint": "^5.0.0",
+    "lockdown": "file:../lockdown"
   },
   "devDependencies": {
     "@types/chai": "^4.2.12",

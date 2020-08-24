@@ -1,11 +1,11 @@
 import 'mocha'
 import { expect } from 'chai'
-import {openedMemoryRepo} from './repo'
-import {makeBlock} from './repo/block'
-import Policy from './policy'
+import {openedMemoryRepo} from '../repo'
+import {makeBlock} from '../repo/block'
+import Policy from './opaPolicy'
 import fs from 'fs'
 
-describe('Policy', ()=> {
+describe.skip('OpAPolicy', ()=> {
     it('executes policy', async ()=> {
         const repo = await openedMemoryRepo('PolicyTree/executes')
     

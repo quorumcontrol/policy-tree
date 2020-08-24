@@ -1,9 +1,8 @@
 import CID from 'cids'
-import { makeBlock, IBlock, decodeBlock } from './repo/block'
-import Policy from './policy'
+import { makeBlock, IBlock } from './repo/block'
+import {Policy} from './policy'
 import debug from 'debug'
 import {Transition, TransitionSet,CanonicalTransitionSet} from './transitionset'
-import {HashMap} from './hashmap'
 import Repo from './repo/repo'
 import { CborStore } from './repo/datastore'
 
@@ -15,26 +14,6 @@ export const notAllowedErr = "TRANSACTION_NOT_ALLOWED"
 // then TransitionSets are played on top of the tree which modify the tree based on that
 // genesis policy.
 
-// interface ImmutableMap {
-//     cid:CID
-//     set:(key:string,value:any)=>Promise<void>
-//     get:<T>(key:string)=>Promise<T>
-//     delete:(key:string)=>Promise<void>
-// }
-
-interface KeyValuePair {
-    key: string
-    value: any
-}
-
-interface PolicyResponse {
-    allow: boolean
-    pairs: KeyValuePair[]
-    needs?: {
-        keys: string[]
-    } 
-}
-
 export interface GenesisOptions {
     policy?: CID
     messageAccount?:string
@@ -42,15 +21,10 @@ export interface GenesisOptions {
     metadata?:any
 }
 
-
 const POLICY_KEY = "/policy"
 const GENESIS_KEY = "/genesis"
 const OWNERSHIP_KEY = "/owners"
 export const MESSAGE_ACCOUNT_KEY = "/message_account"
-
-type PolicyInput = Transition & {
-    keys?: {[key:string]:any}
-}
 
 export class PolicyTree {
     repo:Repo
@@ -136,7 +110,7 @@ export class PolicyTree {
 
             const policyBlock:IBlock = await this.repo.blocks.get(policyCID)
 
-            resolve(new Policy(policyBlock))
+            resolve(await Policy.create(policyBlock))
         })
         return this.policy
     }
@@ -145,38 +119,8 @@ export class PolicyTree {
     async transition(trans:Transition) {
         const policy = await this.fetchPolicy()
 
-        let input:PolicyInput = {...trans}
         log("transition: ", trans)
-        let res = await policy.evaluate<PolicyResponse>(input)
-        log("res: ", res, ' from transition: ', input)
-
-        // if the policy returns a needs key then we will give the policy
-        // the information it needs
-        // for now only *local* keys are available, but it should include things like the state
-        // of other objects in the network
-        if (res.needs) {
-            const valPromises:{[key:string]:Promise<any>} = {}
-            for(const key of res.needs.keys) {
-                valPromises[key] = this.kvStore.get(key)
-            }
-            const vals:(PolicyInput["keys"]) = {}
-            for(const key of res.needs.keys) {
-                vals[key] = await valPromises[key]
-            }
-            input.keys = vals
-            res = await policy.evaluate<PolicyResponse>(input)
-            log("updated res: ", res, ' from transition: ', input)
-        }
-
-        if (!res.allow) {
-            throw new Error(notAllowedErr)
-        }
-
-        for(const pair of res.pairs) {
-            await this.kvStore.put(pair.key, pair.value)
-            if (pair.key === POLICY_KEY) {
-                this.policy = undefined
-            }
-        }
+        let res = await policy.evaluate(this, trans)
+        log("res: ", res, ' from transition: ', trans)
     }
 }

@@ -6,7 +6,8 @@ import { makeBlock } from './repo/block'
 import { PolicyTree } from './policytree'
 import { TransitionSet } from './transitionset';
 
-const setDataBytes = fs.readFileSync('policies/default/setdata/setdata.wasm')
+const setDataContract = fs.readFileSync('policies/javascript/setdata.js').toString()
+const helloLockContract = fs.readFileSync('policies/javascript/hellolock.js').toString()
 
 describe('PolicyTree', () => {
     let repo: any
@@ -19,7 +20,7 @@ describe('PolicyTree', () => {
     })
 
     it('creates', async () => {
-        const block = await makeBlock(setDataBytes)
+        const block = await makeBlock(setDataContract)
         const tree = await PolicyTree.create(repo, 'did:test', { policy: block.cid })
 
         expect((await tree.get('/genesis')).policy.toString()).to.equal(block.cid.toString())
@@ -28,7 +29,7 @@ describe('PolicyTree', () => {
 
 
     it('transitions', async () => {
-        const block = await makeBlock(setDataBytes)
+        const block = await makeBlock(setDataContract)
         await repo.blocks.put(block)
         const tree = await PolicyTree.create(repo, 'did:test', { policy: block.cid })
 
@@ -44,7 +45,7 @@ describe('PolicyTree', () => {
     })
 
     it('works with transition sets', async () => {
-        const block = await makeBlock(setDataBytes)
+        const block = await makeBlock(setDataContract)
         await repo.blocks.put(block)
         const tree = await PolicyTree.create(repo, 'did:test', { policy: block.cid })
         const set = new TransitionSet({
@@ -74,7 +75,7 @@ describe('PolicyTree', () => {
     })
 
     it('performs', async () => {
-        const block = await makeBlock(setDataBytes)
+        const block = await makeBlock(setDataContract)
         await repo.blocks.put(block)
         const tree = await PolicyTree.create(repo, 'did:test', { policy: block.cid })
 
@@ -110,8 +111,7 @@ describe('PolicyTree', () => {
     })
 
     it('gets latest transitionSet', async () => {
-        const needsBytes = fs.readFileSync('policies/examples/needs/needs.wasm')
-        const block = await makeBlock(needsBytes)
+        const block = await makeBlock(helloLockContract)
         await repo.blocks.put(block)
         const tree = await PolicyTree.create(repo, 'did:test', { policy: block.cid })
 
@@ -143,8 +143,7 @@ describe('PolicyTree', () => {
 
 
     it('supports examining tree data in a contract', async () => {
-        const needsBytes = fs.readFileSync('policies/examples/needs/needs.wasm')
-        const block = await makeBlock(needsBytes)
+        const block = await makeBlock(helloLockContract)
         await repo.blocks.put(block)
         const tree = await PolicyTree.create(repo, 'did:test', { policy: block.cid })
 

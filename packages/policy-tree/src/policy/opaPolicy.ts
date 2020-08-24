@@ -1,4 +1,4 @@
-import { IBlock,decodeBlock } from "./repo/block"
+import { IBlock,decodeBlock } from "../repo/block"
 //types are coming soon
 const { loadPolicy } = require("@open-policy-agent/opa-wasm")
 
