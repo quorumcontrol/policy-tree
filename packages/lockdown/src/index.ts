@@ -5,7 +5,7 @@ import * as babelCore from '@babel/core';
 declare const lockdown:any;
 declare class Compartment {
     constructor(opts: any);
-    evaluate(code:string):any;
+    evaluate(code:string, endowments?:any):any;
 }
 
 const transformer = makeMeteringTransformer(babelCore)
@@ -35,14 +35,14 @@ const defaultSandboxOpts = {
 }
 
 export class Sandbox {
-    compartment:Compartment
     meter: any
     refillFacet: any
     transformed: any
+    globalEndowments:SandboxOpts['endowments']
 
     constructor(code:string, opts:SandboxOpts=defaultSandboxOpts) {
         const budgets = {...defaultBudgets, ...opts.budgets}
-        const endowments = {...defaultEndowments, ...opts.endowments}
+        this.globalEndowments = {...defaultEndowments, ...opts.endowments}
 
         const { meter, refillFacet } = makeMeter(budgets);
         this.refillFacet = refillFacet
@@ -56,12 +56,14 @@ export class Sandbox {
             sourceType: 'script',
         })
         this.transformed = transformed
-
-        this.compartment = new Compartment({...endowments, ...transformed.endowments})
     }
 
-    evaluate() {
-        return this.compartment.evaluate(this.transformed.src)
+    evaluate(evalEndowments={}) {
+        const endowments =  {...this.globalEndowments, ...this.transformed.endowments, ...evalEndowments}
+
+        const compartment = new Compartment(endowments)
+
+        return compartment.evaluate(this.transformed.src)
     }
 }
 

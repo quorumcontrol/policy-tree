@@ -22,11 +22,12 @@ describe("sanity", ()=> {
     it('runs', async ()=> {
         const sandbox = new Sandbox(code, {
             endowments: {
-                setTimeout: setTimeout, 
-                print: harden(console.log),
-            },
+                setTimeout: setTimeout,
+            }
         })
-        const result = await sandbox.evaluate()
+        const result = await sandbox.evaluate({
+            print: harden(console.log)
+        })
         expect(result).to.equal('hi')
     })
 })

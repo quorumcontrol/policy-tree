@@ -13,6 +13,7 @@
     "@agoric/tame-metering": "^1.2.3",
     "@babel/core": "^7.11.4",
     "@types/node": "^14.6.0",
+    "policy-tree": "file:../policy-tree",
     "ses": "^0.10.2"
   },
   "devDependencies": {
