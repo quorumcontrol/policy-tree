@@ -67,3 +67,4 @@ export class Sandbox {
     }
 }
 
+export default Sandbox

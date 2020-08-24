@@ -7,7 +7,7 @@ import fs from 'fs'
 import { makeBlock } from '../repo/block'
 import process from 'process'
 
-const setDataBytes = fs.readFileSync('policies/javascript/setdata.js')
+const setDataContract = fs.readFileSync('policies/javascript/setdata.js').toString()
 
 const aliceKeys = {
     publicKey: 'GBE3HUH4YAWYOUU4NISEIRAUVTXCUZUBMD6FPDSOHDWGGJEJJBH22TMD',
@@ -31,7 +31,7 @@ describe('stellar', ()=> {
     })
 
     it('creates and transitions', async ()=> {
-        const block = await makeBlock(setDataBytes)
+        const block = await makeBlock(setDataContract)
         await repo.blocks.put(block)
 
         const stellar = new StellarBack(repo, aliceKeys)
@@ -59,7 +59,7 @@ describe('stellar', ()=> {
     })
 
     it.skip('does 100 updates', async ()=> {
-        const block = await makeBlock(setDataBytes)
+        const block = await makeBlock(setDataContract)
         await repo.blocks.put(block)
 
         const stellar = new StellarBack(repo, aliceKeys)
@@ -99,7 +99,7 @@ describe('stellar', ()=> {
     it('messages', async ()=> {
         const bobRepo = await openedMemoryRepo('stellar-bob')
         try {
-            const block = await makeBlock(setDataBytes)
+            const block = await makeBlock(setDataContract)
             await repo.blocks.put(block) // notice that we don't put the policy into bob's repo, he'll get it from the asset
             const aliceStellar = new StellarBack(repo, aliceKeys)
             const bobStellar = new StellarBack(bobRepo, bobKeys)

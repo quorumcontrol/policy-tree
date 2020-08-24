@@ -10,7 +10,6 @@
   "license": "UNLICENSED",
   "dependencies": {
     "@nebulous/skynet": "^1.1.0",
-    "@open-policy-agent/opa-wasm": "github:open-policy-agent/npm-opa-wasm#master",
     "bit-sequence": "^1.0.0",
     "cids": "^1.0.0",
     "debug": "^4.1.1",
@@ -21,12 +20,12 @@
     "ipld-block": "^0.10.0",
     "ipld-dag-cbor": "^0.17.0",
     "ipld-hashmap": "^1.0.0",
+    "lockdown": "file:../lockdown",
     "memdown": "^5.1.0",
     "multicodec": "^2.0.0",
     "murmurhash3js-revisited": "^3.0.0",
     "stellar-sdk": "^5.0.4",
-    "varint": "^5.0.0",
-    "lockdown": "file:../lockdown"
+    "varint": "^5.0.0"
   },
   "devDependencies": {
     "@types/chai": "^4.2.12",
