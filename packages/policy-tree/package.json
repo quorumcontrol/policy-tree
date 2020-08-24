@@ -19,7 +19,7 @@
     "ipfs-repo": "^6.0.1",
     "ipld-block": "^0.10.0",
     "ipld-dag-cbor": "^0.17.0",
-    "lockdown": "file:../lockdown",
+    "lockdown": "0.0.1",
     "memdown": "^5.1.0",
     "multicodec": "^2.0.0",
     "murmurhash3js-revisited": "^3.0.0",
