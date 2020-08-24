@@ -1,5 +1,5 @@
 import 'ses'
-import { makeMeteringTransformer, makeMeter } from '@agoric/transform-metering/dist/transform-metering.cjs';
+import { makeMeteringTransformer, makeMeter } from 'transform-metering/dist/transform-metering.cjs.js';
 import * as babelCore from '@babel/core';
 
 declare const lockdown:any;
