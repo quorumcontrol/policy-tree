@@ -10,7 +10,7 @@ declare class Compartment {
 
 const transformer = makeMeteringTransformer(babelCore)
 
-lockdown({ errorTaming: 'unsafe' })
+lockdown({ errorTaming: 'unsafe', regExpTaming: 'unsafe' })
 
 // see https://github.com/Agoric/agoric-sdk/blob/f755266d57c9358cd1c247eebd57f574ba892b01/packages/transform-metering/src/constants.js
 interface SandboxOpts {
