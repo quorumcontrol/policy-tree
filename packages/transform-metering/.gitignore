@@ -65,9 +65,6 @@ typings/
 
 .idea/
 
-# dist files
-/dist
-
 # generated integration-test files
 integration-test/.cache
 integration-test/bundles
