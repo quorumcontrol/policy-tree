@@ -8,5 +8,4 @@ async function run() {
             throw new Error("unknown type: " + transition.type)
     }
 }
-
 run()

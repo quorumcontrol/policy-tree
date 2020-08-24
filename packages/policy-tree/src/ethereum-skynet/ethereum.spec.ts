@@ -6,7 +6,7 @@ import { makeBlock } from '../repo/block'
 import fs from 'fs'
 import Repo from '../repo/repo'
 
-const setDataBytes = fs.readFileSync('policies/default/setdata/setdata.wasm')
+const setDataContract = fs.readFileSync('policies/javascript/setdata.js').toString()
 
 describe('ethereum', ()=> {
     let repo: Repo
@@ -19,7 +19,7 @@ describe('ethereum', ()=> {
     })
 
     it('creates and transitions', async ()=> {
-        const block = await makeBlock(setDataBytes)
+        const block = await makeBlock(setDataContract)
         await repo.blocks.put(block)
 
         const eth = new EthereumBack(repo)
