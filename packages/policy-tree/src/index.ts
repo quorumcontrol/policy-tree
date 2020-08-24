@@ -1,4 +1,4 @@
-export * from './policy/opaPolicy'
+export * from './policy'
 export * from './policytree'
 export * from './hashmap'
 export * from './repo'
