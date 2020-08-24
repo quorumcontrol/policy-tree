@@ -1,11 +1,12 @@
 import { Sandbox } from 'lockdown'
-import { IBlock, decodeBlock } from '../repo/block'
+import { IBlock, decodeBlock, makeBlock } from '../repo/block'
 import { PolicyTree } from '../policytree'
 import { Transition } from '../transitionset'
 
 
 export class Policy {
     private sandbox:Sandbox
+    private original:string
 
     static async create(policyBlock:IBlock) {
         const code = await decodeBlock(policyBlock)
@@ -13,7 +14,12 @@ export class Policy {
     }
 
     constructor(code:string) {
+        this.original = code
         this.sandbox = new Sandbox(code) // TODO: opts?
+    }
+
+    toBlock() {
+        return makeBlock(this.original)
     }
 
     evaluate(tree:PolicyTree, transition:Transition):Promise<any> {

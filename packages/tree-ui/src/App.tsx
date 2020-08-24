@@ -1,26 +1,56 @@
 import React from 'react';
 import logo from './logo.svg';
 import './App.css';
-import { openedMemoryRepo, StellarBack, uploadBuffer, downloadFile } from 'policy-tree'
+import { openedMemoryRepo, StellarBack, uploadBuffer, downloadFile, Policy } from 'policy-tree'
 
 const aliceKeys = {
   publicKey: 'GBE3HUH4YAWYOUU4NISEIRAUVTXCUZUBMD6FPDSOHDWGGJEJJBH22TMD',
   privateKey: 'SBZGFEQ2HN7TLPZTD4QJLVPBYF64R532UYDF2TYX5U74QT6GI2Z6ULQM'
 }
 
+const policyStr = `
 async function run() {
+  const transition = await getTransition()
+  switch (transition.type) {
+      case "setdata":
+          await set(transition.metadata.key, transition.metadata.value)
+          return true
+      default:
+          throw new Error("unknown type: " + transition.type)
+  }
+}
+
+run()
+`
+
+async function run() {
+
+  const policy = new Policy(policyStr)
+  const blk = await policy.toBlock()
+
   // const b = Buffer.from('hihi')
   // const url = await uploadBuffer(b)
   // const dl = await downloadFile(url)
   // console.log("upload: ", b, " download: ", dl)
 
   const repo = await openedMemoryRepo('stellar')
+  await repo.blocks.put(blk)
   const stellar = new StellarBack(repo, aliceKeys)
-  const [did,] = await stellar.createAsset({ })
+  const [did,] = await stellar.createAsset({ policy: blk.cid })
   console.log("did: ", did)
+
+  await stellar.transitionAsset(did, {
+    type: "setdata",
+    metadata: {
+      key: "hello",
+      value: "world",
+    }
+  })
+
   console.log("getting asset")
   const tree = await stellar.getAsset(did)
   console.log('tree: ', tree)
+  console.log(await tree.get('hello'))
 }
 
 run()

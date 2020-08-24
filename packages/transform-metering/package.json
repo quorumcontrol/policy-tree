@@ -1,6 +1,6 @@
 {
   "name": "transform-metering",
-  "version": "1.3.0",
+  "version": "0.0.1",
   "description": "transform-metering forked from @agoric/transform-metering",
   "main": "src/index.js",
   "scripts": {
