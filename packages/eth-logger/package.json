@@ -1,0 +1,20 @@
+{
+  "name": "eth-logger",
+  "version": "0.0.1",
+  "description": "",
+  "main": "lib/index.js",
+  "scripts": {
+    "test": "mocha --exit --recursive",
+    "local": "ganache-cli --deterministic"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@openzeppelin/cli": "^2.8.2",
+    "chai": "^4.2.0",
+    "mocha": "^8.1.1"
+  },
+  "devDependencies": {
+    "@openzeppelin/test-environment": "^0.1.4"
+  }
+}
