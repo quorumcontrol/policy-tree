@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.5.0;
+pragma solidity ^0.6.2;
 
 contract PolicyTreeTransitions {
   event Transition(address indexed from, bytes32 indexed bloom, bytes transition);
