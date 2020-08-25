@@ -1,5 +1,5 @@
 import { providers, Contract, Event, Signer } from 'ethers'
-import simpleStorage from './SimpleStorage.json'
+import simpleStorage from './PolicyTreeTransitions.json'
 import debug from 'debug'
 import Repo from '../repo/repo'
 import { GenesisOptions, MESSAGE_ACCOUNT_KEY, PolicyTree } from '../policytree'
@@ -11,7 +11,7 @@ const log = debug('ethereum')
 
 export const provider = new providers.JsonRpcProvider()
 export const signer = provider.getSigner()
-export const contract = new Contract(simpleStorage.networks['5777'].address, simpleStorage.abi, signer)
+export const contract = new Contract(simpleStorage.networks['1598387415435'].address, simpleStorage.abi, signer)
 
 export class EthereumBack {
     repo: Repo
