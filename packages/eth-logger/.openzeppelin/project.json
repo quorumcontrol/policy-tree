@@ -1,6 +1,9 @@
 {
   "manifestVersion": "2.2",
-  "contracts": {},
+  "contracts": {
+    "PolicyTreeTransitions": "PolicyTreeTransitions",
+    "HeavenToken": "HeavenToken"
+  },
   "dependencies": {},
   "name": "eth-logger",
   "version": "0.0.1",

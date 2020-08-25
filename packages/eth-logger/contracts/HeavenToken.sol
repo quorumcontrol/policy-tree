@@ -3,7 +3,7 @@ pragma solidity ^0.6.2;
 import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 
 contract HeavenToken is ERC1155 {
-    mapping(bytes => bool) public offers;
+    mapping(bytes32 => bool) public offers;
 
     uint256 public constant MANA = 0;
 
