@@ -1,11 +1,12 @@
-import { providers, Contract, Event, Signer } from 'ethers'
+import { providers, Contract, Event, utils } from 'ethers'
 import simpleStorage from './PolicyTreeTransitions.json'
 import debug from 'debug'
 import Repo from '../repo/repo'
-import { GenesisOptions, MESSAGE_ACCOUNT_KEY, PolicyTree } from '../policytree'
+import { GenesisOptions, PolicyTree } from '../policytree'
 import { HashMap, serialize, deserialize } from '../hashmap'
 import { uploadBuffer, downloadFile } from '../skynet/skynet'
-import { Transition, TransitionSet } from '../transitionset'
+import { Transition, TransitionSet, serializableTransition, transFromSerializeableTransition, SerializableTransition } from '../transitionset'
+import { makeBlock, decodeBits } from '../repo/block'
 
 const log = debug('ethereum')
 
@@ -45,16 +46,9 @@ export class EthereumBack {
     }
 
     async transitionAsset(did: string, trans: Transition) {
-        log("transitioning asset: ", did, trans)
-        const hshMp = await HashMap.create(this.repo.blocks)
-        await hshMp.set(did, trans)
-
-        const buf = await serialize(hshMp, this.repo.blocks)
-        const siaUrl = await uploadBuffer(buf)
-        log("uploaded serialized hashmap: ", siaUrl)
-        
-        const bloom = hshMp.cid.multihash.slice(2) // first 2 bytes are codec and length
-        return await contract.log(bloom, Buffer.from(siaUrl))
+        const blk = await makeBlock(serializableTransition(trans))
+        const bloom = utils.id(did)
+        return await contract.log(bloom, blk.data)
     }
 
     private async getLocal(did: string) {
@@ -90,7 +84,7 @@ export class EthereumBack {
         if (localTree) {
             tree = localTree
         } else {
-            const mp = await this.transactionToHashMap(genesisTrans)
+            const mp = await this.genesisToHashMap(genesisTrans)
             const genesis = await mp.get('genesis')
             tree = await PolicyTree.create(this.repo, did, genesis)
         }
@@ -98,10 +92,24 @@ export class EthereumBack {
         return this.playTransactions(tree, did, await this.getEventsFrom(blockNumber + 1))
     }
 
-    private async transactionToHashMap(trans: Event):Promise<HashMap|null> {
+    private async eventToTransition(evt: Event):Promise<Transition|null> {
+        const bits = Buffer.from(evt.args.transition.slice(2), 'hex')
+        // const mpBits = await downloadFile(siaUrl)
+        const serializedTrans = await decodeBits<SerializableTransition>(bits)
+        return transFromSerializeableTransition(serializedTrans)
+    }
+    
+    private async genesisToHashMap(trans: Event):Promise<HashMap|null> {
         const siaUrl:string = Buffer.from(trans.args.transition.slice(2), 'hex').toString('utf-8')
         const mpBits = await downloadFile(siaUrl)
         return deserialize(this.repo.blocks, mpBits)
+    }
+    
+    // TODO: this will eventually also support the 32 byte bloom filter for aggregation
+    // for now it is only the did
+    eventHasDid(did:string, evt:Event) {
+        const hsh = utils.id(did)
+        return evt.args.bloom === hsh
     }
 
     private async playTransactions(tree: PolicyTree, did: string, transactions: Event[]): Promise<PolicyTree> {
@@ -122,8 +130,10 @@ export class EthereumBack {
                 // if this transaction has already been included, we can skip it
                 continue
             }
-            const mp = await this.transactionToHashMap(tran)
-            const transition = await mp.get(did)
+            if (!this.eventHasDid(did, tran)) {
+                continue
+            }
+            const transition = await this.eventToTransition(tran)
             if (!transition) {
                 continue
             }

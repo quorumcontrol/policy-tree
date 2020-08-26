@@ -5,7 +5,29 @@ export interface Transition {
     sender?:string // typically a blockchain address
     height?:number
     type:string
-    metadata:any
+    metadata:{[key:string]:any}
+}
+
+// array where first element is type and next element is an array of [key,value] pairs
+export type SerializableTransition = [string, [string,any][]?]
+
+export function serializableTransition(trans:Transition):SerializableTransition {
+    const serializedObj:SerializableTransition = [trans.type]
+    serializedObj.push(Object.keys(trans.metadata).map((key):[string,any]=> {
+        return [key,trans.metadata[key]]
+    }))
+    return serializedObj
+}
+
+export function transFromSerializeableTransition(strans:SerializableTransition):Transition {
+    const metadata = (strans[1] || []).reduce((metaMemo:Transition['metadata'], keyValue)=> {
+        metaMemo[keyValue[0]] = keyValue[1]
+        return metaMemo
+    }, {})
+    return {
+        type: strans[0],
+        metadata: metadata
+    }
 }
 
 interface EnhancedTransition extends Transition {
