@@ -141,7 +141,7 @@ export class StellarBack {
     }
 
     private async getLocal(did: string) {
-        const tree = new PolicyTree(did, this.repo)
+        const tree = new PolicyTree({did, repo: this.repo})
 
         if (await tree.exists()) {
             return tree
@@ -162,7 +162,7 @@ export class StellarBack {
         } else {
             const mp = await this.transactionToHashMap(genesisTrans)
             const genesis = await mp.get('genesis')
-            tree = await PolicyTree.create(this.repo, did, genesis)
+            tree = await PolicyTree.create({repo: this.repo, did}, genesis)
         }
 
         // const pagingToken = latest ? latest.metadata['pagingToken'] : genesisTrans.paging_token

@@ -14,11 +14,29 @@ export const provider = new providers.JsonRpcProvider()
 export const signer = provider.getSigner()
 export const contract = new Contract(PolicyTreeTransitionContract.networks['33343733366'].address, PolicyTreeTransitionContract.abi, signer)
 
+interface EthereumUniverse {
+    getBlock: typeof provider.getBlock,
+    utils: {
+        id: typeof utils.id,
+    },
+    getLogs: typeof provider.getLogs,
+}
+
 export class EthereumBack {
     repo: Repo
+    universe: {eth: EthereumUniverse}
 
     constructor(repo: Repo) {
-        this.repo = repo
+        this.repo = repo,
+        this.universe = {
+            eth: {
+                getBlock: provider.getBlock.bind(provider),
+                utils: harden({
+                    id: utils.id.bind(utils),
+                }),
+                getLogs: provider.getLogs.bind(provider),
+            }
+        }
     }
 
     async createAsset(genesis: GenesisOptions): Promise<[string]> {
@@ -52,7 +70,7 @@ export class EthereumBack {
     }
 
     private async getLocal(did: string) {
-        const tree = new PolicyTree(    did, this.repo)
+        const tree = new PolicyTree({did, repo: this.repo, universe: this.universe})
 
         if (await tree.exists()) {
             return tree
@@ -86,7 +104,7 @@ export class EthereumBack {
         } else {
             const mp = await this.genesisToHashMap(genesisTrans)
             const genesis = await mp.get('genesis')
-            tree = await PolicyTree.create(this.repo, did, genesis)
+            tree = await PolicyTree.create({repo: this.repo, did, universe: this.universe}, genesis)
         }
 
         return this.playTransactions(tree, did, await this.getEventsFrom(blockNumber + 1))
