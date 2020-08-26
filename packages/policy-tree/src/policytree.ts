@@ -26,16 +26,23 @@ const GENESIS_KEY = "/genesis"
 const OWNERSHIP_KEY = "/owners"
 export const MESSAGE_ACCOUNT_KEY = "/message_account"
 
+interface PolicyTreeConstructorOpts {
+    did: string
+    repo: Repo
+    universe?:{[key:string]:any}
+}
+
 export class PolicyTree {
     repo:Repo
     did:string
     private kvStore:CborStore
     private policy?:Promise<Policy>
+    universe?:{[key:string]:any}
 
-    static async create(repo:Repo, did:string, genesis:GenesisOptions = {}) {
+    static async create(opts:PolicyTreeConstructorOpts, genesis:GenesisOptions = {}) {
         const genesisBlock = await makeBlock(genesis)
-        repo.blocks.put(genesisBlock)
-        const tree = new PolicyTree(did, repo)
+        opts.repo.blocks.put(genesisBlock)
+        const tree = new PolicyTree(opts)
         await tree.set(GENESIS_KEY, genesis)
         await tree.set(POLICY_KEY, genesis.policy)
         await tree.set(OWNERSHIP_KEY, genesis.initialOwner ? [genesis.initialOwner] : [])
@@ -43,9 +50,10 @@ export class PolicyTree {
         return tree
     }
 
-    constructor(did:string, repo:Repo) {
+    constructor({did,repo, universe}:PolicyTreeConstructorOpts) {
         this.repo = repo
         this.kvStore = new CborStore(this.repo, did)
+        this.universe = universe
     }
 
     async exists() {
@@ -110,7 +118,7 @@ export class PolicyTree {
 
             const policyBlock:IBlock = await this.repo.blocks.get(policyCID)
 
-            resolve(await Policy.create(policyBlock))
+            resolve(await Policy.create(policyBlock, this.universe))
         })
         return this.policy
     }

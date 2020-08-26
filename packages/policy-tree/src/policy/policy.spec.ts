@@ -18,7 +18,7 @@ describe('Policy', ()=> {
 
     it('evaluates', async ()=> {
         const policy = new Policy(policyBytes.toString())
-        const tree = await PolicyTree.create(repo, "did:test")
+        const tree = await PolicyTree.create({repo, did: "did:test"})
         const transition = {
             type: "setdata",
             metadata: {
@@ -41,7 +41,7 @@ describe('Policy', ()=> {
             }
         }
 
-        const tree = await PolicyTree.create(repo, "did:test")
+        const tree = await PolicyTree.create({repo, did: "did:test"})
 
         // works when hello is world
         const policy = new Policy(universePolicy, {
