@@ -1,5 +1,5 @@
 import { providers, Contract, Event, utils } from 'ethers'
-import simpleStorage from './PolicyTreeTransitions.json'
+import PolicyTreeTransitionContract from './PolicyTreeTransitions.json'
 import debug from 'debug'
 import Repo from '../repo/repo'
 import { GenesisOptions, PolicyTree } from '../policytree'
@@ -12,7 +12,7 @@ const log = debug('ethereum')
 
 export const provider = new providers.JsonRpcProvider()
 export const signer = provider.getSigner()
-export const contract = new Contract(simpleStorage.networks['1598387415435'].address, simpleStorage.abi, signer)
+export const contract = new Contract(PolicyTreeTransitionContract.networks['33343733366'].address, PolicyTreeTransitionContract.abi, signer)
 
 export class EthereumBack {
     repo: Repo
