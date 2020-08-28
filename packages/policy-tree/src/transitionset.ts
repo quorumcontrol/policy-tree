@@ -6,6 +6,7 @@ export enum TransitionTypes {
     SEND_TOKEN = 0,
     RECEIVE_TOKEN = 1,
     SET_DATA = 2,
+    MINT_TOKEN = 3,
 }
 
 export interface Transition {

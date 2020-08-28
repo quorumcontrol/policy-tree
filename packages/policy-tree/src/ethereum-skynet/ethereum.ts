@@ -148,7 +148,11 @@ export class EthereumBack {
 
         const transitionsByBlockHeight: { [key: number]: Transition[] } = {}
 
+        let highestBlock = 0
         for (const tran of transactions) {
+            if (tran.blockNumber > highestBlock) {
+                highestBlock = tran.blockNumber
+            }
             if (latest && tran.blockNumber <= latest.height ) {
                 // if this transaction has already been included, we can skip it
                 continue
@@ -183,7 +187,7 @@ export class EthereumBack {
             await tree.applySet(set)
         }
 
-        const nextEvents = await this.getEventsFrom(sortedKeys[sortedKeys.length - 1] + 1)
+        const nextEvents = await this.getEventsFrom(highestBlock+1)
         return this.playTransactions(tree, did, nextEvents)
     }
 }

@@ -5,10 +5,13 @@ import { openedMemoryRepo } from '../repo'
 import { makeBlock } from '../repo/block'
 import fs from 'fs'
 import Repo from '../repo/repo'
-import { TransitionTypes } from '../transitionset'
+import { TransitionTypes, TransitionSet } from '../transitionset'
+import BigNumber from 'bignumber.js'
+import { canonicalTokenName } from '../policytree'
 
 const setDataContract = fs.readFileSync('policies/javascript/setdata.js').toString()
 const ethHelloWorldContract = fs.readFileSync('policies/javascript/ethhelloworld.js').toString()
+const ethStandardContract = fs.readFileSync('policies/javascript/ethstandard.js').toString()
 
 describe('ethereum', ()=> {
     let repo: Repo
@@ -72,6 +75,53 @@ describe('ethereum', ()=> {
 
         expect((await tree.getData('block'))).to.include({number: transResponse.blockNumber})
     })
+
+    it('sends coins through the standard contract', async ()=> {
+        const block = await makeBlock(ethStandardContract)
+        await repo.blocks.put(block)
+
+        const eth = new EthereumBack(repo)
+        console.log("creating alice")
+        const [aliceDid,] = await eth.createAsset({ policy: block.cid })
+        console.log("creating bob")
+        const [bobDid,] = await eth.createAsset({ policy: block.cid })
+        
+        console.log("getting alice")
+        let alice = await eth.getAsset(aliceDid)
+        console.log("getting bob")
+        let bob = await eth.getAsset(bobDid)
+
+        await eth.transitionAsset(aliceDid, {
+            type: TransitionTypes.MINT_TOKEN,
+            metadata: {
+                token: 'aliceCoin',
+                amount: new BigNumber(100).toString(),
+            },
+        })
+
+        await eth.transitionAsset(aliceDid, {
+            type: TransitionTypes.SEND_TOKEN,
+            metadata: {
+                token: canonicalTokenName(alice.did, 'aliceCoin'),
+                amount: new BigNumber(10).toString(),
+                dest: bobDid,
+                nonce: 'abc',
+            },
+        })
+
+        await eth.transitionAsset(bobDid, {
+            type: TransitionTypes.RECEIVE_TOKEN,
+            metadata: {
+                token: canonicalTokenName(alice.did, 'aliceCoin'),
+                amount: new BigNumber(10).toString(),
+                from: aliceDid,
+                nonce: 'abc',
+            },
+        })
+
+        bob = await eth.getAsset(bobDid)
+        expect((await bob.getBalance(canonicalTokenName(alice.did, 'aliceCoin'))).toString()).to.equal(new BigNumber(10).toString())
+    })  
 
     
 })

@@ -6,7 +6,6 @@ import {Transition, TransitionSet,CanonicalTransitionSet, TransitionTypes} from 
 import Repo from './repo/repo'
 import { CborStore } from './repo/datastore'
 import BigNumber from 'bignumber.js'
-import { stringify } from 'querystring'
 
 const log = debug("PolicyTree")
 

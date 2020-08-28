@@ -33,11 +33,13 @@ export class Policy {
                     setData: (key:string, val:any)=> tree.setData(key,val),
                     sendToken: (canonicalTokenName:string, dest:string, amount:BigNumber, nonce:string)=> tree.sendToken(canonicalTokenName, dest, amount, nonce),
                     receiveToken: (canonicalTokenName:string, nonce:string, otherTree: ReadOnlyTree)=> tree.receiveToken(canonicalTokenName, nonce, otherTree),
+                    mintToken: (tokenName:string, amount:BigNumber)=> tree.mint(tokenName, amount),
                 }
             },
             BigNumber: harden(BigNumber),
             getTransition: ()=> transition,
             getUniverse: ()=> harden(this.universe),
+            print: console.log,
         })
     }
 }
