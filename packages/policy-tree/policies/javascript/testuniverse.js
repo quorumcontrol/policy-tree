@@ -1,3 +1,5 @@
+const { setData } = getTree()
+
 async function run() {
     const transition = await getTransition()
     const universe = await getUniverse()
@@ -11,7 +13,7 @@ async function run() {
             return true
         case 2:
             for (let key of Object.keys(transition.metadata)) {
-                await set(key, transition.metadata[key])
+                await setData(key, transition.metadata[key])
             }
             return true
         default:

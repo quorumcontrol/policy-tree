@@ -1,3 +1,5 @@
+const { setData, getData } = getTree()
+
 async function run() {
     const transition = await getTransition()
     switch (transition.type) {
@@ -8,18 +10,18 @@ async function run() {
             const metadata = transition.metadata
                 // always allow setting the /hello key
             if (metadata['/hello']) {
-                return set('/hello', metadata['/hello'])
+                return setData('/hello', metadata['/hello'])
             }
 
             // otherwise make sure '/hello' === 'world'
-            const currentHello = await get('/hello')
+            const currentHello = await getData('/hello')
             if (currentHello !== 'world') {
                 return false
             }
 
             // but if we're here you've unlocked the asset, yay!
             for (let key of Object.keys(transition.metadata)) {
-                await set(key, transition.metadata[key])
+                await setData(key, transition.metadata[key])
             }
             return true
         default:

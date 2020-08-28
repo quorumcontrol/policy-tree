@@ -2,7 +2,7 @@ import { providers, Contract, Event, utils } from 'ethers'
 import PolicyTreeTransitionContract from './PolicyTreeTransitions.json'
 import debug from 'debug'
 import Repo from '../repo/repo'
-import { GenesisOptions, PolicyTree } from '../policytree'
+import { GenesisOptions, PolicyTree, ReadOnlyTree } from '../policytree'
 import { HashMap, serialize, deserialize } from '../hashmap'
 import { uploadBuffer, downloadFile } from '../skynet/skynet'
 import { Transition, TransitionSet, serializableTransition, transFromSerializeableTransition, SerializableTransition } from '../transitionset'
@@ -20,7 +20,7 @@ interface EthereumUniverse {
         id: typeof utils.id,
     },
     getLogs: typeof provider.getLogs,
-    getAsset: (did:string)=>Promise<PolicyTree>
+    getAsset: (did:string)=>Promise<ReadOnlyTree>,
 }
 
 export class EthereumBack {
@@ -36,9 +36,9 @@ export class EthereumBack {
                     id: utils.id.bind(utils),
                 }),
                 getLogs: provider.getLogs.bind(provider),
-                getAsset: (did:string)=> {
-                    return this.getAsset(did)
-                }
+                getAsset: async (did:string)=> {
+                    return (await this.getAsset(did)).readOnly()
+                },
             }
         }
     }

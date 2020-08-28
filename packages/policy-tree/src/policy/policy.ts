@@ -1,8 +1,9 @@
 import { Sandbox } from 'lockdown'
 import { IBlock, decodeBlock, makeBlock } from '../repo/block'
-import { PolicyTree } from '../policytree'
+import { PolicyTree, canonicalTokenName, ReadOnlyTree } from '../policytree'
 import { Transition } from '../transitionset'
-
+import { BigNumber } from 'bignumber.js'
+import { stringify } from 'querystring'
 
 export class Policy {
     private sandbox:Sandbox
@@ -26,11 +27,17 @@ export class Policy {
 
     evaluate(tree:PolicyTree, transition:Transition):Promise<any> {
         return this.sandbox.evaluate({
+            getTree: ()=> {
+                return {
+                    ...tree.readOnly(),
+                    setData: (key:string, val:any)=> tree.setData(key,val),
+                    sendToken: (canonicalTokenName:string, dest:string, amount:BigNumber, nonce:string)=> tree.sendToken(canonicalTokenName, dest, amount, nonce),
+                    receiveToken: (canonicalTokenName:string, nonce:string, otherTree: ReadOnlyTree)=> tree.receiveToken(canonicalTokenName, nonce, otherTree),
+                }
+            },
+            BigNumber: harden(BigNumber),
             getTransition: ()=> transition,
             getUniverse: ()=> harden(this.universe),
-            get: (key:string)=>tree.getData(key),
-            set: (key:string, val:any)=> tree.setData(key,val),
-            print: console.log,
         })
     }
 }

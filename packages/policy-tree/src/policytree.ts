@@ -6,6 +6,7 @@ import {Transition, TransitionSet,CanonicalTransitionSet, TransitionTypes} from 
 import Repo from './repo/repo'
 import { CborStore } from './repo/datastore'
 import BigNumber from 'bignumber.js'
+import { stringify } from 'querystring'
 
 const log = debug("PolicyTree")
 
@@ -30,9 +31,13 @@ interface PolicyTreeConstructorOpts {
     universe?:{[key:string]:any}
 }
 
-interface ReadOnlyTree {
-    getData: PolicyTree['getData']
-    exists: PolicyTree['exists']
+export interface ReadOnlyTree {
+    did:string,
+    getData: PolicyTree['getData'],
+    getPayment: PolicyTree['getPayment'],
+    getBalance: PolicyTree['getBalance'],
+    getMeta: PolicyTree['getMeta'],
+    exists: PolicyTree['exists'],
 }
 
 export function canonicalTokenName(did:string, tokenName:string) {
@@ -102,7 +107,7 @@ export class PolicyTree {
         await this.valueStore.put(paymentKey, {dest, amount: amount.toString()})
     }
 
-    async receiveToken(canonicalTokenName: string, nonce:string, otherTree:PolicyTree) {
+    async receiveToken(canonicalTokenName: string, nonce:string, otherTree:ReadOnlyTree) {
         const otherTreesPayment = await otherTree.getPayment(canonicalTokenName, nonce)
         if (!otherTreesPayment) {
             return false
@@ -159,7 +164,7 @@ export class PolicyTree {
             try {
                 await this.transition({...transition, height: set.height})
             } catch(err) {
-                if(err.message !== notAllowedErr) {
+                if (err.message !== notAllowedErr) {
                     throw err
                 }
                 // otherwise do nothing and continue (ignoring the transition)
@@ -175,12 +180,23 @@ export class PolicyTree {
     }
 
     readOnly():ReadOnlyTree {
+        const tree = this // for binding
         return harden({
+            did: tree.did,
             getData: (key:string)=> {
-                return this.getData(key)
+                return tree.getData(key)
             },
             exists: ()=> {
-                return this.exists() 
+                return tree.exists() 
+            },
+            getPayment: (canonicalTokenName:string, nonce:string)=> {
+                return tree.getPayment(canonicalTokenName, nonce)
+            },
+            getMeta: (key:string)=> {
+                return tree.getMeta(key)
+            },
+            getBalance: (canonicalTokenName: string) => {
+                return tree.getBalance(canonicalTokenName)
             }
         })
     }
