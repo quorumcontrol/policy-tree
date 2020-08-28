@@ -23,6 +23,7 @@ describe('PolicyTree', () => {
 
     it('creates', async () => {
         const block = await makeBlock(setDataContract)
+        repo.blocks.put(block)
         const tree = await PolicyTree.create({repo, did: 'did:test'}, { policy: block.cid })
 
         expect((await tree.getMeta('/genesis')).policy.toString()).to.equal(block.cid.toString())

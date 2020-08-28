@@ -2,6 +2,7 @@ import CID from 'cids'
 import { makeBlock, IBlock } from './repo/block'
 
 export enum TransitionTypes {
+    GENESIS = -1,
     SEND_TOKEN = 0,
     RECEIVE_TOKEN = 1,
     SET_DATA = 2,

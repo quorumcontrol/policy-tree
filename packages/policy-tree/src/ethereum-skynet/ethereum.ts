@@ -52,15 +52,16 @@ export class EthereumBack {
         const siaUrl = await uploadBuffer(serialized)
         log("siaUrl: ", siaUrl)
 
-        const sendingAddress = signer.getAddress()
+        const sendingAddress = await signer.getAddress()
+        if (!genesis.initialOwners) {
+            genesis.initialOwners = [sendingAddress]
+        }
+
         const bloom = hshMp.cid.multihash.slice(2) // first 2 bytes are codec and length
-        // const gasEstimate = await contract.estimateGas.log(bloom, Buffer.from(siaUrl))
-        const gasEstimate = await contract.estimateGas.log(bloom, serialized)
-        console.log('estimate: ', gasEstimate.toNumber())
 
         const resp = await contract.log(bloom, Buffer.from(siaUrl))
         log("create resp: ", resp)
-        return [`did:eth:${resp.blockNumber}-${await sendingAddress}-${resp.hash}`]
+        return [`did:eth:${resp.blockNumber}-${sendingAddress}-${resp.hash}`]
     }
 
     async messageAsset(did: string, trans: Transition) {

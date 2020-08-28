@@ -1,5 +1,5 @@
 import StellarSdk, { Operation, Server, TransactionBuilder, ServerApi, Horizon, Asset, Memo, xdr } from 'stellar-sdk'
-import { GenesisOptions, PolicyTree, MESSAGE_ACCOUNT_KEY } from '../policytree';
+import { GenesisOptions, PolicyTree, GENESIS_KEY } from '../policytree';
 import Repo, { Key } from '../repo/repo';
 import CID from 'cids';
 import { Transition, TransitionSet } from '../transitionset';
@@ -74,7 +74,7 @@ export class StellarBack {
      */
     async messageAsset(did: string, trans: Transition) {
         const tree = await this.getAsset(did)
-        const messageQueueAccount = await tree.getData(MESSAGE_ACCOUNT_KEY)
+        const messageQueueAccount = (await tree.getMeta(GENESIS_KEY)).metadata.messageAccount
         if (!messageQueueAccount) {
             throw new Error("asset must allow messaging")
         }

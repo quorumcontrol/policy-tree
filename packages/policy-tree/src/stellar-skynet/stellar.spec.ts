@@ -105,7 +105,9 @@ describe('stellar', ()=> {
 
             const [did,] = await aliceStellar.createAsset({ 
                 policy: block.cid,
-                messageAccount: aliceKeys.publicKey,
+                metadata: {
+                    messageAccount: aliceKeys.publicKey
+                },
             })
             if (!did) {
                 throw new Error("no did returned")

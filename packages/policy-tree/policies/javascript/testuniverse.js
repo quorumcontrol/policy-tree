@@ -7,6 +7,8 @@ async function run() {
     }
 
     switch (transition.type) {
+        case -1:
+            return true
         case 2:
             for (let key of Object.keys(transition.metadata)) {
                 await set(key, transition.metadata[key])

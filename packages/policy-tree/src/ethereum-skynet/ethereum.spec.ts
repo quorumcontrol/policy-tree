@@ -30,7 +30,6 @@ describe('ethereum', ()=> {
         if (!did) {
             throw new Error("no did returned")
         }
-        console.log("did: ", did)
 
         let tree = await eth.getAsset(did)
         expect(await tree.lastTransitionSet()).to.be.undefined

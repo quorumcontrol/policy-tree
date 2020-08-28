@@ -36,6 +36,7 @@ export class CborStore {
             if (err.message.includes("Not Found")) {
                 return undefined
             }
+            console.error(`err getting (${key}): `, err)
             throw err
         }
     }

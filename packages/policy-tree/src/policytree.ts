@@ -2,7 +2,7 @@ import CID from 'cids'
 import { makeBlock, IBlock } from './repo/block'
 import {Policy} from './policy'
 import debug from 'debug'
-import {Transition, TransitionSet,CanonicalTransitionSet} from './transitionset'
+import {Transition, TransitionSet,CanonicalTransitionSet, TransitionTypes} from './transitionset'
 import Repo from './repo/repo'
 import { CborStore } from './repo/datastore'
 import BigNumber from 'bignumber.js'
@@ -17,15 +17,12 @@ export const notAllowedErr = "TRANSACTION_NOT_ALLOWED"
 
 export interface GenesisOptions {
     policy?: CID
-    messageAccount?:string
-    initialOwner?: string
-    metadata?:any
+    initialOwners?: string[]
+    metadata?:{[key:string]:any}
 }
 
-const POLICY_KEY = "/policy"
-const GENESIS_KEY = "/genesis"
-const OWNERSHIP_KEY = "/owners"
-export const MESSAGE_ACCOUNT_KEY = "/message_account"
+export const POLICY_KEY = "/policy"
+export const GENESIS_KEY = "/genesis"
 
 interface PolicyTreeConstructorOpts {
     did: string
@@ -56,9 +53,15 @@ export class PolicyTree {
         opts.repo.blocks.put(genesisBlock)
         const tree = new PolicyTree(opts)
         await tree.setMeta(GENESIS_KEY, genesis)
-        await tree.setData(POLICY_KEY, genesis.policy)
-        await tree.setData(OWNERSHIP_KEY, genesis.initialOwner ? [genesis.initialOwner] : [])
-        await tree.setData(MESSAGE_ACCOUNT_KEY, genesis.messageAccount)
+
+        if (genesis.policy) {
+            await tree.setData(POLICY_KEY, genesis.policy)
+            await tree.transition({
+                type: TransitionTypes.GENESIS,
+                metadata: genesis,
+            })    
+        }
+       
         return tree
     }
 
