@@ -95,7 +95,7 @@ describe('PolicyTree', () => {
         }]
 
         const hrstart = process.hrtime()
-        for (let i = 0; i < 100; i++) {
+        for (let i = 0; i < 500; i++) {
             const set = new TransitionSet({
                 source: "test",
                 height: i,
@@ -107,7 +107,7 @@ describe('PolicyTree', () => {
         // console.info('Execution time (hr): %ds %dms', hrend[0], hrend[1] / 1000000)
         // expect that to take < 600ms
         expect(hrend[0]).to.be.equal(0)
-        expect(hrend[1] / 1000000).to.be.lessThan(600)
+        expect(hrend[1] / 1000000).to.be.lessThan(900)
     })
 
     it('gets latest transitionSet', async () => {
@@ -166,6 +166,15 @@ describe('PolicyTree', () => {
         const workingTree = await PolicyTree.create({repo, did: 'did:test', universe }, { policy: block.cid })
         await workingTree.transition(trans)
         expect(await workingTree.get('hi')).equal('hi')
+    })
+
+    it('returns a read-only tree', async ()=> {
+        const block = await makeBlock(setDataContract)
+        await repo.blocks.put(block)
+        const tree = await PolicyTree.create({repo, did: 'did:test'}, { policy: block.cid })
+
+        const readOnly = tree.readOnly()
+        expect(Reflect.get(readOnly, 'set')).to.be.undefined
     })
 
     it('supports examining tree data in a contract', async () => {

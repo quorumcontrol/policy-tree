@@ -20,6 +20,7 @@ interface EthereumUniverse {
         id: typeof utils.id,
     },
     getLogs: typeof provider.getLogs,
+    getAsset: (did:string)=>Promise<PolicyTree>
 }
 
 export class EthereumBack {
@@ -35,6 +36,9 @@ export class EthereumBack {
                     id: utils.id.bind(utils),
                 }),
                 getLogs: provider.getLogs.bind(provider),
+                getAsset: (did:string)=> {
+                    return this.getAsset(did)
+                }
             }
         }
     }

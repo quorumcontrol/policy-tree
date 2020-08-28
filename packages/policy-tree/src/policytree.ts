@@ -32,6 +32,11 @@ interface PolicyTreeConstructorOpts {
     universe?:{[key:string]:any}
 }
 
+interface ReadOnlyTree {
+    get: PolicyTree['get']
+    exists: PolicyTree['exists']
+}
+
 export class PolicyTree {
     repo:Repo
     did:string
@@ -102,6 +107,17 @@ export class PolicyTree {
         // we now have an updated tree, let's save some metadata
         await this.set(`/transition-sets/current`, setObj)
         await this.set(key, setObj)
+    }
+
+    readOnly():ReadOnlyTree {
+        return harden({
+            get: (key:string)=> {
+                return this.get(key)
+            },
+            exists: ()=> {
+                return this.exists() 
+            }
+        })
     }
 
     // TODO: this is never invalidated, so if a policy lets you modify a policy
