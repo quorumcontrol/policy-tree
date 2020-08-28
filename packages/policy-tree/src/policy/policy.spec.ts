@@ -28,7 +28,7 @@ describe('Policy', ()=> {
         }
         const resp = await policy.evaluate(tree, transition)
         expect(resp).to.be.true
-        expect(await tree.get('test')).to.equal('test')
+        expect(await tree.getData('test')).to.equal('test')
     })
 
     it('works with a universe', async ()=> {
@@ -49,7 +49,7 @@ describe('Policy', ()=> {
         })
         const resp = await policy.evaluate(tree, transition)
         expect(resp).to.be.true
-        expect(await tree.get('test')).to.equal('test')
+        expect(await tree.getData('test')).to.equal('test')
 
         // returns false when hello is not world
 
@@ -65,7 +65,7 @@ describe('Policy', ()=> {
         }
         const resp2 = await policyDiffUniverse.evaluate(tree, transition2)
         expect(resp2).to.be.false
-        expect(await tree.get('test')).to.equal('test')
+        expect(await tree.getData('test')).to.equal('test')
 
     })
 })

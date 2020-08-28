@@ -74,7 +74,7 @@ export class StellarBack {
      */
     async messageAsset(did: string, trans: Transition) {
         const tree = await this.getAsset(did)
-        const messageQueueAccount = await tree.get(MESSAGE_ACCOUNT_KEY)
+        const messageQueueAccount = await tree.getData(MESSAGE_ACCOUNT_KEY)
         if (!messageQueueAccount) {
             throw new Error("asset must allow messaging")
         }

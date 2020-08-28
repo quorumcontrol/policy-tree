@@ -5,6 +5,7 @@ import debug from 'debug'
 import {Transition, TransitionSet,CanonicalTransitionSet} from './transitionset'
 import Repo from './repo/repo'
 import { CborStore } from './repo/datastore'
+import BigNumber from 'bignumber.js'
 
 const log = debug("PolicyTree")
 
@@ -33,14 +34,20 @@ interface PolicyTreeConstructorOpts {
 }
 
 interface ReadOnlyTree {
-    get: PolicyTree['get']
+    getData: PolicyTree['getData']
     exists: PolicyTree['exists']
+}
+
+export function canonicalTokenName(did:string, tokenName:string) {
+    return `${did}-${tokenName}`
 }
 
 export class PolicyTree {
     repo:Repo
     did:string
-    private kvStore:CborStore
+    private dataStore:CborStore
+    private valueStore:CborStore
+    private metaStore:CborStore
     private policy?:Promise<Policy>
     universe?:{[key:string]:any}
 
@@ -48,33 +55,88 @@ export class PolicyTree {
         const genesisBlock = await makeBlock(genesis)
         opts.repo.blocks.put(genesisBlock)
         const tree = new PolicyTree(opts)
-        await tree.set(GENESIS_KEY, genesis)
-        await tree.set(POLICY_KEY, genesis.policy)
-        await tree.set(OWNERSHIP_KEY, genesis.initialOwner ? [genesis.initialOwner] : [])
-        await tree.set(MESSAGE_ACCOUNT_KEY, genesis.messageAccount)
+        await tree.setMeta(GENESIS_KEY, genesis)
+        await tree.setData(POLICY_KEY, genesis.policy)
+        await tree.setData(OWNERSHIP_KEY, genesis.initialOwner ? [genesis.initialOwner] : [])
+        await tree.setData(MESSAGE_ACCOUNT_KEY, genesis.messageAccount)
         return tree
     }
 
     constructor({did,repo, universe}:PolicyTreeConstructorOpts) {
         this.repo = repo
-        this.kvStore = new CborStore(this.repo, did)
+        this.did = did
+        this.dataStore = new CborStore(this.repo, did)
+        this.valueStore = new CborStore(this.repo, `${did}-value`)
+        this.metaStore = new CborStore(this.repo, `${did}-meta`)
         this.universe = universe
     }
 
     async exists() {
-        return !!(await this.kvStore.get(GENESIS_KEY))
+        return !!(await this.dataStore.get(GENESIS_KEY))
     }
 
-    set(key:string,value:any) {
-        return this.kvStore.put(key,value)
+    async mint(tokenName:string, amount:BigNumber) {
+        const key = canonicalTokenName(this.did, tokenName)
+        const currentBalance = await this.getBalance(key)
+        await this.valueStore.put(key, currentBalance.plus(amount).toString())
     }
 
-    async get<T=any>(key:string):Promise<T> {
-        return this.kvStore.get<T>(key)
+    getPayment(canonicalTokenName:string, nonce:string) {
+        return this.valueStore.get(`${canonicalTokenName}/sends/${nonce}`)
+    }
+
+    async sendToken(canonicalTokenName: string, dest:string, amount:BigNumber, nonce:string) {
+        const currentBalance = await this.getBalance(canonicalTokenName)
+        const paymentKey = `${canonicalTokenName}/sends/${nonce}`
+        if (currentBalance.lt(amount)) {
+            return false
+        }
+        if (await this.valueStore.get(paymentKey)) {
+            return false
+        }
+
+        await this.valueStore.put(canonicalTokenName, currentBalance.minus(amount).toString())
+        await this.valueStore.put(paymentKey, {dest, amount: amount.toString()})
+    }
+
+    async receiveToken(canonicalTokenName: string, nonce:string, otherTree:PolicyTree) {
+        const otherTreesPayment = await otherTree.getPayment(canonicalTokenName, nonce)
+        if (!otherTreesPayment) {
+            return false
+        }
+        // see if we've already received
+        if (await this.valueStore.get(`${canonicalTokenName}/receives/${nonce}`)) {
+            return false
+        }
+        // if not then write it out
+        const currentBalance = await this.getBalance(canonicalTokenName)
+        await this.valueStore.put(canonicalTokenName, currentBalance.plus(new BigNumber(otherTreesPayment.amount)).toString())
+        await this.valueStore.put(`${canonicalTokenName}/receives/${nonce}`, otherTreesPayment)
+    }
+
+    async getBalance(canonicalTokenName:string):Promise<BigNumber> {
+        const val = await this.valueStore.get(canonicalTokenName)
+        return new BigNumber(val || 0)
+    }
+
+    setData(key:string,value:any) {
+        return this.dataStore.put(key,value)
+    }
+
+    getData<T=any>(key:string):Promise<T> {
+        return this.dataStore.get<T>(key)
+    }
+
+    setMeta(key:string,value:any) {
+        return this.metaStore.put(key,value)
+    }
+
+    getMeta<T=any>(key:string):Promise<T> {
+        return this.metaStore.get<T>(key)
     }
 
     async lastTransitionSet() {
-        const canonicalTransition = await this.get<CanonicalTransitionSet|undefined>('/transition-sets/current')
+        const canonicalTransition = await this.getMeta<CanonicalTransitionSet|undefined>('/transition-sets/current')
         if (canonicalTransition) {
             return TransitionSet.fromCanonical(canonicalTransition)
         }
@@ -105,14 +167,14 @@ export class PolicyTree {
         setObj.previous = key
 
         // we now have an updated tree, let's save some metadata
-        await this.set(`/transition-sets/current`, setObj)
-        await this.set(key, setObj)
+        await this.setMeta(`/transition-sets/current`, setObj)
+        await this.setMeta(key, setObj)
     }
 
     readOnly():ReadOnlyTree {
         return harden({
-            get: (key:string)=> {
-                return this.get(key)
+            getData: (key:string)=> {
+                return this.getData(key)
             },
             exists: ()=> {
                 return this.exists() 
@@ -127,7 +189,7 @@ export class PolicyTree {
             return this.policy
         }
         this.policy = new Promise(async (resolve) => {
-            const policyCID = await this.kvStore.get<CID|undefined>(POLICY_KEY)
+            const policyCID = await this.dataStore.get<CID|undefined>(POLICY_KEY)
             if (!policyCID) {
                 throw new Error("no transitions defined")
             }

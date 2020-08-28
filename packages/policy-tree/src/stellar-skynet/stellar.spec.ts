@@ -55,7 +55,7 @@ describe('stellar', ()=> {
         tree = await stellar.getAsset(did)
         expect(await tree.lastTransitionSet()).to.exist
 
-        expect((await tree.get('hi'))).to.equal('hi')
+        expect((await tree.getData('hi'))).to.equal('hi')
     })
 
     it.skip('does 100 updates', async ()=> {
@@ -93,7 +93,7 @@ describe('stellar', ()=> {
 
         expect(await tree.lastTransitionSet()).to.be.not.be.null
 
-        expect((await tree.get('hi1'))).to.equal('hi1')
+        expect((await tree.getData('hi1'))).to.equal('hi1')
     }).timeout(20000000)
 
     it('messages', async ()=> {
@@ -140,8 +140,8 @@ describe('stellar', ()=> {
             tree = await bobStellar.getAsset(did)
             expect(await tree.lastTransitionSet()).to.exist
     
-            expect((await tree.get('hi'))).to.equal('hi')
-            expect((await tree.get('bob'))).to.equal('setthis')
+            expect((await tree.getData('hi'))).to.equal('hi')
+            expect((await tree.getData('bob'))).to.equal('setthis')
 
         } catch(err) {
             throw err

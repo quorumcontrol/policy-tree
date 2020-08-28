@@ -5,6 +5,7 @@ import fs from 'fs'
 import { makeBlock } from './repo/block'
 import { PolicyTree } from './policytree'
 import { TransitionSet, Transition } from './transitionset';
+import BigNumber from 'bignumber.js'
 
 const setDataContract = fs.readFileSync('policies/javascript/setdata.js').toString()
 const helloLockContract = fs.readFileSync('policies/javascript/hellolock.js').toString()
@@ -24,8 +25,8 @@ describe('PolicyTree', () => {
         const block = await makeBlock(setDataContract)
         const tree = await PolicyTree.create({repo, did: 'did:test'}, { policy: block.cid })
 
-        expect((await tree.get('/genesis')).policy.toString()).to.equal(block.cid.toString())
-        expect((await tree.get('/policy')).toString()).to.equal(block.cid.toString())
+        expect((await tree.getMeta('/genesis')).policy.toString()).to.equal(block.cid.toString())
+        expect((await tree.getData('/policy')).toString()).to.equal(block.cid.toString())
     })
 
     it('transitions', async () => {
@@ -41,7 +42,7 @@ describe('PolicyTree', () => {
             }
         })
 
-        expect((await tree.get('hi'))).to.equal('hi')
+        expect((await tree.getData('hi'))).to.equal('hi')
     })
 
     it('works with transition sets', async () => {
@@ -70,8 +71,8 @@ describe('PolicyTree', () => {
         })
         await tree.applySet(set)
         expect(await tree.lastTransitionSet()).to.exist
-        expect((await tree.get('/hi'))).to.equal('hi')
-        expect((await tree.get('/cool'))).to.equal('cool')
+        expect((await tree.getData('/hi'))).to.equal('hi')
+        expect((await tree.getData('/cool'))).to.equal('cool')
     })
 
     it('performs', async () => {
@@ -158,14 +159,14 @@ describe('PolicyTree', () => {
 
         const tree = await PolicyTree.create({repo, did: 'did:test', universe }, { policy: block.cid })
         await tree.transition(trans)
-        expect(await tree.get('hi')).to.be.undefined
+        expect(await tree.getData('hi')).to.be.undefined
 
         universe = {
             hello: ()=> 'world'
         }
         const workingTree = await PolicyTree.create({repo, did: 'did:test', universe }, { policy: block.cid })
         await workingTree.transition(trans)
-        expect(await workingTree.get('hi')).equal('hi')
+        expect(await workingTree.getData('hi')).equal('hi')
     })
 
     it('returns a read-only tree', async ()=> {
@@ -204,7 +205,7 @@ describe('PolicyTree', () => {
                 'value': 'hi'
             }
         })
-        expect((await tree.get('/hello'))).to.equal('hi')
+        expect((await tree.getData('/hello'))).to.equal('hi')
 
         // but since the magic key isn't set correctly, we still can't set other keys
         try {
@@ -228,7 +229,7 @@ describe('PolicyTree', () => {
                 'value': 'world'
             }
         })
-        expect((await tree.get('/hello'))).to.equal('world')
+        expect((await tree.getData('/hello'))).to.equal('world')
 
         // and then we can set any key!
 
@@ -239,7 +240,33 @@ describe('PolicyTree', () => {
                 'value': 'hi'
             }
         })
-        expect((await tree.get('hi'))).to.equal('hi')
+        expect((await tree.getData('hi'))).to.equal('hi')
+    })
+
+    it('supports tokens', async ()=> {
+        const alice = await PolicyTree.create({repo, did: 'did:alice'})
+        const bob = await PolicyTree.create({repo, did: 'did:bob'})
+
+        const canonicalName = 'did:alice-test'
+
+        // alice can mint
+        await alice.mint('test', new BigNumber(100))
+        expect((await alice.getBalance(canonicalName)).toString()).to.equal(new BigNumber(100).toString())
+
+        // alice can do a send to bob for 55
+        expect(await alice.sendToken(canonicalName, bob.did, new BigNumber(55), 'abc')).to.not.be.false
+        // but not for another 50
+        expect(await alice.sendToken(canonicalName, bob.did, new BigNumber(50), 'def')).to.be.false
+
+        // bob can receive
+        await bob.receiveToken(canonicalName, 'abc', alice)
+        expect((await bob.getBalance(canonicalName)).toString()).to.equal(new BigNumber(55).toString())
+
+        // but not twice
+        expect(await bob.receiveToken(canonicalName, 'abc', alice)).to.be.false
+
+        // and not with an unknown nonce
+        expect(await bob.receiveToken(canonicalName, 'def', alice)).to.be.false
     })
 
 })

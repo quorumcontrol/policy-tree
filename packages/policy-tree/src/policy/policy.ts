@@ -28,8 +28,8 @@ export class Policy {
         return this.sandbox.evaluate({
             getTransition: ()=> transition,
             getUniverse: ()=> harden(this.universe),
-            get: (key:string)=>tree.get(key),
-            set: (key:string, val:any)=> tree.set(key,val)
+            get: (key:string)=>tree.getData(key),
+            set: (key:string, val:any)=> tree.setData(key,val)
         })
     }
 }

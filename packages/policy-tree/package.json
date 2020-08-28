@@ -10,6 +10,7 @@
   "license": "UNLICENSED",
   "dependencies": {
     "@nebulous/skynet": "^1.1.0",
+    "bignumber.js": "^9.0.0",
     "bit-sequence": "^1.0.0",
     "cids": "^1.0.0",
     "debug": "^4.1.1",

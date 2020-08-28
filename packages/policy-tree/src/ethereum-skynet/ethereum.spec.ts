@@ -45,7 +45,7 @@ describe('ethereum', ()=> {
         tree = await eth.getAsset(did)
         expect(await tree.lastTransitionSet()).to.exist
 
-        expect((await tree.get('hi'))).to.equal('hi')
+        expect((await tree.getData('hi'))).to.equal('hi')
     })
 
     it('supports a universe', async ()=> {
@@ -71,7 +71,7 @@ describe('ethereum', ()=> {
         tree = await eth.getAsset(did)
         expect(await tree.lastTransitionSet()).to.exist
 
-        expect((await tree.get('block'))).to.include({number: transResponse.blockNumber})
+        expect((await tree.getData('block'))).to.include({number: transResponse.blockNumber})
     })
 
     
