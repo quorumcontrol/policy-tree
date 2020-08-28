@@ -4,7 +4,7 @@ import { openedMemoryRepo } from './repo'
 import fs from 'fs'
 import { makeBlock } from './repo/block'
 import { PolicyTree } from './policytree'
-import { TransitionSet, Transition } from './transitionset';
+import { TransitionSet, Transition, TransitionTypes } from './transitionset';
 import BigNumber from 'bignumber.js'
 
 const setDataContract = fs.readFileSync('policies/javascript/setdata.js').toString()
@@ -35,10 +35,9 @@ describe('PolicyTree', () => {
         const tree = await PolicyTree.create({repo, did: 'did:test'}, { policy: block.cid })
 
         await tree.transition({
-            type: 'setdata',
+            type: TransitionTypes.SET_DATA,
             metadata: {
-                'key': 'hi',
-                'value': 'hi'
+                'hi':'hi',
             }
         })
 
@@ -54,17 +53,15 @@ describe('PolicyTree', () => {
             height: 0,
             transitions: [
                 {
-                    type: 'setdata',
+                    type: TransitionTypes.SET_DATA,
                     metadata: {
-                        'key': '/hi',
-                        'value': 'hi'
+                        '/hi': 'hi'
                     }
                 },
                 {
-                    type: 'setdata',
+                    type: TransitionTypes.SET_DATA,
                     metadata: {
-                        'key': '/cool',
-                        'value': 'cool'
+                        '/cool': 'cool'
                     }
                 }
             ]
@@ -81,14 +78,14 @@ describe('PolicyTree', () => {
         const tree = await PolicyTree.create({repo, did: 'did:test'}, { policy: block.cid })
 
         const trans = [{
-            type: 'setdata',
+            type: TransitionTypes.SET_DATA,
             metadata: {
                 'key': '/hi',
                 'value': 'hi'
             }
         },
         {
-            type: 'setdata',
+            type: TransitionTypes.SET_DATA,
             metadata: {
                 'key': '/cool',
                 'value': 'cool'
@@ -121,10 +118,9 @@ describe('PolicyTree', () => {
             height: 0,
             transitions: [
                 {
-                    type: 'setdata',
+                    type: TransitionTypes.SET_DATA,
                     metadata: {
-                        'key': '/hello',
-                        'value': 'hi'
+                        '/hello': 'hi',
                     }
                 },
             ],
@@ -150,10 +146,9 @@ describe('PolicyTree', () => {
         }
 
         let trans:Transition = {
-            type: 'setdata',
+            type: TransitionTypes.SET_DATA,
             metadata: {
-                key: 'hi',
-                value: 'hi',
+                'hi': 'hi',
             }
         }
 
@@ -186,10 +181,9 @@ describe('PolicyTree', () => {
         // we haven't set the magic key (see needs.rego) so this will throw
         try {
             await tree.transition({
-                type: 'setdata',
+                type: TransitionTypes.SET_DATA,
                 metadata: {
-                    'key': 'hi',
-                    'value': 'hi'
+                    'hi': 'hi'
                 }
             })
             expect(false).to.be.true // we should never get here
@@ -199,10 +193,9 @@ describe('PolicyTree', () => {
 
 
         await tree.transition({
-            type: 'setdata',
+            type: TransitionTypes.SET_DATA,
             metadata: {
-                'key': '/hello',
-                'value': 'hi'
+                '/hello': 'hi',
             }
         })
         expect((await tree.getData('/hello'))).to.equal('hi')
@@ -210,10 +203,9 @@ describe('PolicyTree', () => {
         // but since the magic key isn't set correctly, we still can't set other keys
         try {
             await tree.transition({
-                type: 'setdata',
+                type: TransitionTypes.SET_DATA,
                 metadata: {
-                    'key': 'hi',
-                    'value': 'hi'
+                    'hi': 'hi'
                 }
             })
             expect(false).to.be.true // we should never get here
@@ -223,10 +215,9 @@ describe('PolicyTree', () => {
 
         // but then we can set the magic key correctly
         await tree.transition({
-            type: 'setdata',
+            type: TransitionTypes.SET_DATA,
             metadata: {
-                'key': '/hello',
-                'value': 'world'
+                '/hello': 'world',
             }
         })
         expect((await tree.getData('/hello'))).to.equal('world')
@@ -234,10 +225,9 @@ describe('PolicyTree', () => {
         // and then we can set any key!
 
         await tree.transition({
-            type: 'setdata',
+            type: TransitionTypes.SET_DATA,
             metadata: {
-                'key': 'hi',
-                'value': 'hi'
+                'hi': 'hi',
             }
         })
         expect((await tree.getData('hi'))).to.equal('hi')
@@ -273,7 +263,6 @@ describe('PolicyTree', () => {
         expect((await bob.getBalance(canonicalName)).toString()).to.equal(new BigNumber(1).toString())
         await alice.receiveToken(canonicalName, 'def', bob)
         expect((await alice.getBalance(canonicalName)).toString()).to.equal(new BigNumber(45+54).toString())
-
     })
 
 })

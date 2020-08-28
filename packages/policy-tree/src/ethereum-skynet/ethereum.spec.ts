@@ -5,6 +5,7 @@ import { openedMemoryRepo } from '../repo'
 import { makeBlock } from '../repo/block'
 import fs from 'fs'
 import Repo from '../repo/repo'
+import { TransitionTypes } from '../transitionset'
 
 const setDataContract = fs.readFileSync('policies/javascript/setdata.js').toString()
 const ethHelloWorldContract = fs.readFileSync('policies/javascript/ethhelloworld.js').toString()
@@ -35,10 +36,9 @@ describe('ethereum', ()=> {
         expect(await tree.lastTransitionSet()).to.be.undefined
         
         await eth.transitionAsset(did, {
-            type: 'setdata',
+            type: TransitionTypes.SET_DATA,
             metadata: {
-                'key': 'hi',
-                'value': 'hi'
+                'hi':'hi'
             }
         })
 
@@ -64,7 +64,7 @@ describe('ethereum', ()=> {
         expect(await tree.lastTransitionSet()).to.be.undefined
         
         const transResponse = await eth.transitionAsset(did, {
-            type: 'update',
+            type: 1000,
             metadata: {},
         })
 

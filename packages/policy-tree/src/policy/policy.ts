@@ -29,7 +29,8 @@ export class Policy {
             getTransition: ()=> transition,
             getUniverse: ()=> harden(this.universe),
             get: (key:string)=>tree.getData(key),
-            set: (key:string, val:any)=> tree.setData(key,val)
+            set: (key:string, val:any)=> tree.setData(key,val),
+            print: console.log,
         })
     }
 }

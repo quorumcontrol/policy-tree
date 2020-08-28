@@ -72,7 +72,7 @@ export class PolicyTree {
     }
 
     async exists() {
-        return !!(await this.dataStore.get(GENESIS_KEY))
+        return !!(await this.getMeta(GENESIS_KEY))
     }
 
     async mint(tokenName:string, amount:BigNumber) {

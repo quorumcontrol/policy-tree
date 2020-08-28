@@ -6,6 +6,7 @@ import Repo from '../repo/repo'
 import fs from 'fs'
 import { makeBlock } from '../repo/block'
 import process from 'process'
+import { TransitionTypes } from '../transitionset'
 
 const setDataContract = fs.readFileSync('policies/javascript/setdata.js').toString()
 
@@ -45,10 +46,9 @@ describe('stellar', ()=> {
         expect(await tree.lastTransitionSet()).to.be.undefined
         
         await stellar.transitionAsset(did, {
-            type: 'setdata',
+            type: TransitionTypes.SET_DATA,
             metadata: {
-                'key': 'hi',
-                'value': 'hi'
+                'hi':'hi',
             }
         })
 
@@ -76,10 +76,9 @@ describe('stellar', ()=> {
 
         for (let i = 0; i < iterations; i++) {
             await stellar.transitionAsset(did, {
-                type: 'setdata',
+                type: TransitionTypes.SET_DATA,
                 metadata: {
-                    'key': `hi${i}`,
-                    'value': `hi${i}`
+                    [`hi${i}`]: `hi${i}`,
                 }
             })
             console.log(`iteration: ${i}: ${process.hrtime()[0]}`)
@@ -116,19 +115,17 @@ describe('stellar', ()=> {
             expect(await tree.lastTransitionSet()).to.be.undefined
             
             await aliceStellar.transitionAsset(did, {
-                type: 'setdata',
+                type: TransitionTypes.SET_DATA,
                 metadata: {
-                    'key': 'hi',
-                    'value': 'hi'
+                    'hi':'hi'
                 }
             })
 
             try {
                 await bobStellar.messageAsset(did, {
-                    type: 'setdata',
+                    type: TransitionTypes.SET_DATA,
                     metadata: {
-                        'key': 'bob',
-                        'value': 'setthis'
+                        'bob': 'setthis'
                     }
                 })
             } catch(err) {

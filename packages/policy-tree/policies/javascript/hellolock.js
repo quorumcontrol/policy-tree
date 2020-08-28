@@ -1,13 +1,13 @@
 async function run() {
     const transition = await getTransition()
-    if (transition.type !== 'setdata') {
+    if (transition.type !== 2) {
         return false
     }
     const metadata = transition.metadata
 
     // always allow setting the /hello key
-    if (metadata.key === '/hello') {
-        return set(metadata.key, metadata.value)
+    if (metadata['/hello']) {
+        return set('/hello', metadata['/hello'])
     }
 
     // otherwise make sure '/hello' === 'world'
@@ -17,7 +17,9 @@ async function run() {
     }
 
     // but if we're here you've unlocked the asset, yay!
-    return set(metadata.key, metadata.value)
+    for (let key of Object.keys(transition.metadata)) {
+        await set(key, transition.metadata[key])
+    }
 }
 
 run()

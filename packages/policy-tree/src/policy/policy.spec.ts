@@ -3,6 +3,7 @@ import fs from 'fs'
 import { openedMemoryRepo } from '../repo'
 import { PolicyTree } from '../policytree'
 import { expect } from 'chai'
+import { TransitionTypes } from '../transitionset'
 
 const policyBytes = fs.readFileSync('policies/javascript/setdata.js')
 
@@ -20,10 +21,9 @@ describe('Policy', ()=> {
         const policy = new Policy(policyBytes.toString())
         const tree = await PolicyTree.create({repo, did: "did:test"})
         const transition = {
-            type: "setdata",
+            type: TransitionTypes.SET_DATA,
             metadata: {
-                key: "test",
-                value: "test",
+                'test': 'test',
             }
         }
         const resp = await policy.evaluate(tree, transition)
@@ -34,10 +34,9 @@ describe('Policy', ()=> {
     it('works with a universe', async ()=> {
         const universePolicy = fs.readFileSync('policies/javascript/testuniverse.js').toString()
         const transition = {
-            type: "setdata",
+            type: TransitionTypes.SET_DATA,
             metadata: {
-                key: "test",
-                value: "test",
+                'test':'test',
             }
         }
 
@@ -57,10 +56,9 @@ describe('Policy', ()=> {
             hello: ()=> 'notworld'
         })
         const transition2 = {
-            type: "setdata",
+            type: TransitionTypes.SET_DATA,
             metadata: {
-                key: "test",
-                value: "different",
+                'test': 'different',
             }
         }
         const resp2 = await policyDiffUniverse.evaluate(tree, transition2)

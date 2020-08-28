@@ -1,15 +1,21 @@
 import CID from 'cids'
 import { makeBlock, IBlock } from './repo/block'
 
+export enum TransitionTypes {
+    SEND_TOKEN = 0,
+    RECEIVE_TOKEN = 1,
+    SET_DATA = 2,
+}
+
 export interface Transition {
     sender?:string // typically a blockchain address
     height?:number
-    type:string
+    type:number
     metadata:{[key:string]:any}
 }
 
 // array where first element is type and next element is an array of [key,value] pairs
-export type SerializableTransition = [string, [string,any][]?]
+export type SerializableTransition = [number, [string,any][]?]
 
 export function serializableTransition(trans:Transition):SerializableTransition {
     const serializedObj:SerializableTransition = [trans.type]
