@@ -5,16 +5,18 @@ const GENESIS = -1,
     MINT_TOKEN = 3
 
 const { setData, sendToken, receiveToken, mintToken } = getTree()
-const { eth: { getAsset } } = getUniverse()
 
 async function run() {
     const transition = await getTransition()
     const metadata = transition.metadata
 
+    if (transition.type === GENESIS) {
+        return true
+    }
+
+    const { eth: { getAsset } } = getUniverse()
+
     switch (transition.type) {
-        case GENESIS:
-            // do nothing on genesis
-            return true
         case SET_DATA:
             for (let key of Object.keys(transition.metadata)) {
                 await setData(key, transition.metadata[key])

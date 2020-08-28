@@ -1,6 +1,6 @@
 import 'mocha'
 import { expect } from 'chai'
-import {contract, signer, EthereumBack} from './ethereum'
+import { EthereumBack } from './ethereum'
 import { openedMemoryRepo } from '../repo'
 import { makeBlock } from '../repo/block'
 import fs from 'fs'

@@ -25,11 +25,11 @@ interface EthereumUniverse {
 
 export class EthereumBack {
     repo: Repo
-    universe: {eth: EthereumUniverse}
+    baseUniverse: {eth: EthereumUniverse}
 
     constructor(repo: Repo) {
         this.repo = repo,
-        this.universe = {
+        this.baseUniverse = {
             eth: {
                 getBlock: provider.getBlock.bind(provider),
                 utils: harden({
@@ -37,6 +37,20 @@ export class EthereumBack {
                 }),
                 getLogs: provider.getLogs.bind(provider),
                 getAsset: async (did:string)=> {
+                    return (await this.getAsset(did)).readOnly()
+                },
+            }
+        }
+    }
+
+    private universeForTree(tree:PolicyTree):{eth: EthereumUniverse} {
+        return {
+            eth: {
+                ...this.baseUniverse.eth,
+                getAsset: async (did:string)=> {
+                    if (tree.did === did) {
+                        return tree.readOnly()
+                    }
                     return (await this.getAsset(did)).readOnly()
                 },
             }
@@ -75,7 +89,8 @@ export class EthereumBack {
     }
 
     private async getLocal(did: string) {
-        const tree = new PolicyTree({did, repo: this.repo, universe: this.universe})
+        const tree = new PolicyTree({did, repo: this.repo})
+        tree.universe = this.universeForTree(tree)
 
         if (await tree.exists()) {
             return tree
@@ -109,7 +124,8 @@ export class EthereumBack {
         } else {
             const mp = await this.genesisToHashMap(genesisTrans)
             const genesis = await mp.get('genesis')
-            tree = await PolicyTree.create({repo: this.repo, did, universe: this.universe}, genesis)
+            tree = await PolicyTree.create({repo: this.repo, did}, genesis)
+            tree.universe = this.universeForTree(tree)
         }
 
         return this.playTransactions(tree, did, await this.getEventsFrom(blockNumber + 1))
