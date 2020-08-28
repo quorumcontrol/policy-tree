@@ -267,6 +267,13 @@ describe('PolicyTree', () => {
 
         // and not with an unknown nonce
         expect(await bob.receiveToken(canonicalName, 'def', alice)).to.be.false
+
+        // and bog can send back to alice
+        await bob.sendToken(canonicalName, alice.did, new BigNumber(54), 'def')
+        expect((await bob.getBalance(canonicalName)).toString()).to.equal(new BigNumber(1).toString())
+        await alice.receiveToken(canonicalName, 'def', bob)
+        expect((await alice.getBalance(canonicalName)).toString()).to.equal(new BigNumber(45+54).toString())
+
     })
 
 })
