@@ -4,7 +4,7 @@ const GENESIS = -1,
     SET_DATA = 2,
     MINT_TOKEN = 3
 
-const { setData, sendToken, receiveToken, mintToken } = getTree()
+const { setData, sendToken, receiveToken, mintToken, getData, getMeta } = getTree()
 
 async function run() {
     const transition = await getTransition()
@@ -12,6 +12,15 @@ async function run() {
 
     if (transition.type === GENESIS) {
         return true
+    }
+
+    const { initialOwners } = await getMeta("/genesis")
+    const currentOwners = await getData("/owners")
+
+    const owners = (currentOwners || initialOwners)
+    print("owners: ", owners, " initial: ", initialOwners)
+    if (owners.includes(transition.sender)) {
+        return false
     }
 
     const { eth: { getAsset } } = getUniverse()

@@ -2,7 +2,7 @@ import { providers, Contract, Event, utils } from 'ethers'
 import PolicyTreeTransitionContract from './PolicyTreeTransitions.json'
 import debug from 'debug'
 import Repo from '../repo/repo'
-import { GenesisOptions, PolicyTree, ReadOnlyTree } from '../policytree'
+import { GenesisOptions, PolicyTree, ReadOnlyTree, GENESIS_KEY } from '../policytree'
 import { HashMap, serialize, deserialize } from '../hashmap'
 import { uploadBuffer, downloadFile } from '../skynet/skynet'
 import { Transition, TransitionSet, serializableTransition, transFromSerializeableTransition, SerializableTransition } from '../transitionset'
@@ -58,6 +58,11 @@ export class EthereumBack {
     }
 
     async createAsset(genesis: GenesisOptions): Promise<[string]> {
+        const sendingAddress = await signer.getAddress()
+        if (!genesis.initialOwners) {
+            genesis.initialOwners = [sendingAddress]
+        }
+        
         const hshMp = await HashMap.create(this.repo.blocks)
         await hshMp.set('genesis', genesis)
 
@@ -65,11 +70,6 @@ export class EthereumBack {
 
         const siaUrl = await uploadBuffer(serialized)
         log("siaUrl: ", siaUrl)
-
-        const sendingAddress = await signer.getAddress()
-        if (!genesis.initialOwners) {
-            genesis.initialOwners = [sendingAddress]
-        }
 
         const bloom = hshMp.cid.multihash.slice(2) // first 2 bytes are codec and length
 
@@ -120,10 +120,13 @@ export class EthereumBack {
         let tree: PolicyTree
         const localTree = await this.getLocal(did)
         if (localTree) {
+            log("local tree exists for ", did, " genesis: ", await localTree.getMeta(GENESIS_KEY))
             tree = localTree
         } else {
             const mp = await this.genesisToHashMap(genesisTrans)
             const genesis = await mp.get('genesis')
+            log("genesis: ", genesis)
+
             tree = await PolicyTree.create({repo: this.repo, did}, genesis)
             tree.universe = this.universeForTree(tree)
         }
