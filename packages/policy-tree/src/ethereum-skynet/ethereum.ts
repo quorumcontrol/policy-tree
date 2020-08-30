@@ -43,26 +43,12 @@ export class EthereumBack {
         }
     }
 
-    private universeForTree(tree:PolicyTree):{eth: EthereumUniverse} {
-        return {
-            eth: {
-                ...this.baseUniverse.eth,
-                getAsset: async (did:string)=> {
-                    if (tree.did === did) {
-                        return tree.readOnly()
-                    }
-                    return (await this.getAsset(did)).readOnly()
-                },
-            }
-        }
-    }
-
     async createAsset(genesis: GenesisOptions): Promise<[string]> {
         const sendingAddress = await signer.getAddress()
         if (!genesis.initialOwners) {
             genesis.initialOwners = [sendingAddress]
         }
-        
+
         const hshMp = await HashMap.create(this.repo.blocks)
         await hshMp.set('genesis', genesis)
 
@@ -89,8 +75,7 @@ export class EthereumBack {
     }
 
     private async getLocal(did: string) {
-        const tree = new PolicyTree({did, repo: this.repo})
-        tree.universe = this.universeForTree(tree)
+        const tree = new PolicyTree({did, repo: this.repo, universe: this.baseUniverse})
 
         if (await tree.exists()) {
             return tree
@@ -99,20 +84,18 @@ export class EthereumBack {
         return undefined
     }
 
-    private getEventsFrom(height:number) {
-        return contract.queryFilter({}, height)
+    private getEventsFor(did:string, height:number) {
+        const filter = contract.filters.Transition(null, utils.id(did))
+        return contract.queryFilter(filter, height)
     }
 
     async getAsset(did: string) {
         log("get asset: ", did)
         const idParts = did.split(':')[2] // comes in the format did:eth:${resp.blockNumber}-${sendingAddress}-${resp.transactionHash}
-        const [blockNumberStr,sendingAddress,transHash] = idParts.split('-')
-        const blockNumber = parseInt(blockNumberStr, 10)
-        const filter = contract.filters.Transition(sendingAddress)
-        const transitions = await contract.queryFilter(filter, blockNumber, blockNumber)
-        log("transitions in block: ", transitions)
+        const [_blockNumberStr,_sendingAddress,transHash] = idParts.split('-')
+        const genesisTrans = await provider.getTransactionReceipt(transHash)
+        log("genesis tx: ", genesisTrans, " logs: ", genesisTrans.logs)
 
-        const genesisTrans = transitions.find((t)=> (t.transactionHash === transHash))
         log("genesis: ", genesisTrans)
         if (!genesisTrans) {
             throw new Error("Not Found: " + genesisTrans)
@@ -127,11 +110,10 @@ export class EthereumBack {
             const genesis = await mp.get('genesis')
             log("genesis: ", genesis)
 
-            tree = await PolicyTree.create({repo: this.repo, did}, genesis)
-            tree.universe = this.universeForTree(tree)
+            tree = await PolicyTree.create({repo: this.repo, did, universe: this.baseUniverse}, genesis)
         }
 
-        return this.playTransactions(tree, did, await this.getEventsFrom(blockNumber + 1))
+        return this.playTransactions(tree, did, await this.getEventsFor(did, genesisTrans.blockNumber + 1))
     }
 
     private async eventToTransition(evt: Event):Promise<Transition|null> {
@@ -141,8 +123,10 @@ export class EthereumBack {
         return transFromSerializeableTransition(serializedTrans)
     }
     
-    private async genesisToHashMap(trans: Event):Promise<HashMap|null> {
-        const siaUrl:string = Buffer.from(trans.args.transition.slice(2), 'hex').toString('utf-8')
+    private async genesisToHashMap(trans: providers.TransactionReceipt):Promise<HashMap|null> {
+        const transition = contract.interface.decodeEventLog("Transition", trans.logs[0].data).transition
+
+        const siaUrl:string = Buffer.from(transition.slice(2), 'hex').toString('utf-8')
         const mpBits = await downloadFile(siaUrl)
         return deserialize(this.repo.blocks, mpBits)
     }
@@ -206,7 +190,7 @@ export class EthereumBack {
             await tree.applySet(set)
         }
 
-        const nextEvents = await this.getEventsFrom(highestBlock+1)
+        const nextEvents = await this.getEventsFor(did, highestBlock+1)
         return this.playTransactions(tree, did, nextEvents)
     }
 }
