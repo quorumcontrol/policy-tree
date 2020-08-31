@@ -158,15 +158,15 @@ describe('PolicyTree', () => {
             ]
         })
 
-        const tree = await PolicyTree.create({ repo, did: 'did:test', universe }, { policy: block.cid })
-        await tree.applySet(set)
+        const tree = await PolicyTree.create({ repo, did: 'did:test' }, { policy: block.cid }, universe)
+        await tree.applySet(set, universe)
         expect((await tree.current()).getData('hi')).to.be.undefined
 
         universe = {
             hello: () => 'world'
         }
-        const workingTree = await PolicyTree.create({ repo, did: 'did:test', universe }, { policy: block.cid })
-        await workingTree.applySet(set)
+        const workingTree = await PolicyTree.create({ repo, did: 'did:test' }, { policy: block.cid }, universe)
+        await workingTree.applySet(set, universe)
         expect((await workingTree.current()).getData('hi')).equal('hi')
     })
 

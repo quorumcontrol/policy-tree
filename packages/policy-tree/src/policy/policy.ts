@@ -8,16 +8,14 @@ import { PolicyTreeVersion, ReadOnlyPolicyTreeVersion } from '../policytree'
 export class Policy {
     private sandbox:Sandbox
     private original:string
-    private universe?:any
 
-    static async create(policyBlock:IBlock, universe?:any) {
+    static async create(policyBlock:IBlock) {
         const code = await decodeBlock(policyBlock)
-        return new Policy(code, universe)
+        return new Policy(code)
     }
 
-    constructor(code:string, universe?:any) {
+    constructor(code:string) {
         this.original = code
-        this.universe = universe
         this.sandbox = new Sandbox(code) // TODO: opts?
     }
 
@@ -25,7 +23,7 @@ export class Policy {
         return makeBlock(this.original)
     }
 
-    evaluate(tree:PolicyTreeVersion, transition:Transition):Promise<any> {
+    evaluate(tree:PolicyTreeVersion, transition:Transition, universe?:any):Promise<any> {
         return this.sandbox.evaluate({
             getTree: ()=> {
                 return {
@@ -38,7 +36,7 @@ export class Policy {
             },
             BigNumber: harden(BigNumber),
             getTransition: ()=> transition,
-            getUniverse: ()=> harden(this.universe),
+            getUniverse: ()=> harden(universe),
             print: console.log,
         })
     }

@@ -77,7 +77,7 @@ export class EthereumBack {
     }
 
     private async getLocal(did: string) {
-        const tree = new PolicyTree({did, repo: this.repo, universe: this.baseUniverse})
+        const tree = new PolicyTree({did, repo: this.repo})
 
         if (await tree.exists()) {
             return tree
@@ -86,12 +86,12 @@ export class EthereumBack {
         return undefined
     }
 
-    private getEventsFor(did:string, height:number) {
+    private getEventsFor(did:string, height:number, max?:number) {
         const filter = contract.filters.Transition(null, utils.id(did))
-        return contract.queryFilter(filter, height)
+        return contract.queryFilter(filter, height, max)
     }
 
-    async getAsset(did: string) {
+    async getAsset(did: string, maxBlockHeight?:number) {
         log("get asset: ", did)
         const idParts = did.split(':')[2] // comes in the format did:eth:${resp.blockNumber}-${sendingAddress}-${resp.transactionHash}
         const [_blockNumberStr,_sendingAddress,transHash] = idParts.split('-')
@@ -107,17 +107,25 @@ export class EthereumBack {
         if (localTree) {
             log("local tree exists for ", did, " genesis: ", await localTree.getMeta(GENESIS_KEY))
             tree = localTree
+            const height = (await tree.current()).height
+            if (height >= maxBlockHeight) {
+                return tree
+            }
         } else {
             const mp = await this.genesisToHashMap(genesisTrans)
             const genesis = await mp.get('genesis')
             log("genesis: ", genesis)
 
-            tree = await PolicyTree.create({repo: this.repo, did, universe: this.baseUniverse}, genesis)
+            tree = await PolicyTree.create({repo: this.repo, did}, genesis, this.baseUniverse)
         }
 
         const height = (await tree.current()).height
 
-        return this.playTransactions(tree, did, await this.getEventsFor(did, height ? (height + 1) : (genesisTrans.blockNumber + 1)))
+        return this.playTransactions(tree, did, await this.getEventsFor(
+            did, 
+            height ? (height + 1) : (genesisTrans.blockNumber + 1),
+            maxBlockHeight,
+        ), maxBlockHeight)
     }
 
     private async eventToTransition(evt: Event):Promise<Transition|null> {
@@ -142,14 +150,12 @@ export class EthereumBack {
         return evt.args.bloom === hsh
     }
 
-    private async playTransactions(tree: PolicyTree, did: string, transactions: Event[]): Promise<PolicyTree> {
+    private async playTransactions(tree: PolicyTree, did: string, transactions: Event[], maxBlockHeight?:number): Promise<PolicyTree> {
         log("play transactions: ", transactions)
         // if we have no transactions here it means we've reached the end of paging
         if (transactions.length === 0) {
             return tree
         }
-        // get the latest and if the latest exists than make sure these transactions are greater 
-        const latest = (await tree.current()).height
 
         // go through all the transactions and if none of them are more recent, just move onto the next one
 
@@ -159,10 +165,6 @@ export class EthereumBack {
         for (const tran of transactions) {
             if (tran.blockNumber > highestBlock) {
                 highestBlock = tran.blockNumber
-            }
-            if (tran.blockNumber <= latest ) {
-                // if this transaction has already been included, we can skip it
-                continue
             }
             if (!this.eventHasDid(did, tran)) {
                 continue
@@ -191,10 +193,21 @@ export class EthereumBack {
 
         for (let set of sets) {
             log("applying set")
-            await tree.applySet(set)
+            const previousBlock = set.height - 1
+            await tree.applySet(set, {
+                eth: {
+                    ...this.baseUniverse.eth,
+                    // we want the transitions to always produce reproducible results so always use the state of *other* assets
+                    // at the previous block height to the block height of this transition
+                    getAsset: async (did:string)=> {
+                        log("this asset called: ", previousBlock)
+                        return (await (await this.getAsset(did, previousBlock)).at(previousBlock))
+                    },
+                }
+            })
         }
 
         const nextEvents = await this.getEventsFor(did, highestBlock+1)
-        return this.playTransactions(tree, did, nextEvents)
+        return this.playTransactions(tree, did, nextEvents, maxBlockHeight)
     }
 }

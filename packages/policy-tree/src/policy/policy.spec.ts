@@ -43,25 +43,25 @@ describe('Policy', ()=> {
         const tree = await PolicyTree.create({repo, did: "did:test"})
 
         // works when hello is world
-        const policy = new Policy(universePolicy, {
+        const policy = new Policy(universePolicy)
+        const resp = await policy.evaluate(await tree.current(), transition, {
             hello: ()=> 'world'
         })
-        const resp = await policy.evaluate(await tree.current(), transition)
         expect(resp).to.be.true
         expect((await tree.current()).getData('test')).to.equal('test')
 
         // returns false when hello is not world
 
-        const policyDiffUniverse = new Policy(universePolicy, {
-            hello: ()=> 'notworld'
-        })
+        const policyDiffUniverse = new Policy(universePolicy)
         const transition2 = {
             type: TransitionTypes.SET_DATA,
             metadata: {
                 'test': 'different',
             }
         }
-        const resp2 = await policyDiffUniverse.evaluate(await tree.current(), transition2)
+        const resp2 = await policyDiffUniverse.evaluate(await tree.current(), transition2,{
+            hello: ()=> 'notworld'
+        })
         expect(resp2).to.be.false
         expect((await tree.current()).getData('test')).to.equal('test')
 

@@ -146,12 +146,12 @@ export class PolicyTreeVersion {
     }
 
     // TODO: you should always use a set
-    async transition(trans: Transition) {
+    async transition(trans: Transition, universe?:any) {
         if (!this.policy) {
             throw new Error("transition called with no policy attached")
         }
         log("transition: ", trans)
-        let res = await this.policy.evaluate(this, trans)
+        let res = await this.policy.evaluate(this, trans, universe)
         log("res: ", res, ' from transition: ', trans)
     }
 }

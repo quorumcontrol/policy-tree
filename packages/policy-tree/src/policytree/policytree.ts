@@ -29,7 +29,6 @@ export const GENESIS_KEY = "/genesis"
 interface PolicyTreeConstructorOpts {
     did: string
     repo: Repo
-    universe?: { [key: string]: any }
 }
 
 export class PolicyTree {
@@ -39,11 +38,10 @@ export class PolicyTree {
     // private valueStore:VersionStore
     private metaStore: CborStore
     private policy?: Promise<Policy>
-    universe?: { [key: string]: any }
     height: number
 
 
-    static async create(opts: PolicyTreeConstructorOpts, genesis: GenesisOptions = {}) {
+    static async create(opts: PolicyTreeConstructorOpts, genesis: GenesisOptions = {}, universe?:any) {
         const genesisBlock = await makeBlock(genesis)
         opts.repo.blocks.put(genesisBlock)
         const tree = new PolicyTree(opts)
@@ -54,7 +52,7 @@ export class PolicyTree {
                 await version.transition({
                     type: TransitionTypes.GENESIS,
                     metadata: genesis,
-                })
+                }, universe)
                 return true
             })
         }
@@ -62,13 +60,12 @@ export class PolicyTree {
         return tree
     }
 
-    constructor({ did, repo, universe }: PolicyTreeConstructorOpts) {
+    constructor({ did, repo }: PolicyTreeConstructorOpts) {
         this.repo = repo
         this.did = did
         this.dataStore = new VersionStore(this.repo, did)
         // this.valueStore = new VersionStore(this.repo, `${did}-value`)
         this.metaStore = new CborStore(this.repo, `${did}-meta`)
-        this.universe = universe
     }
 
     async transact(height: number, transactor: (tree: PolicyTreeVersion) => Promise<boolean>) {
@@ -114,12 +111,12 @@ export class PolicyTree {
         return this.metaStore.get<T>(key)
     }
 
-    async applySet(set: TransitionSet) {
+    async applySet(set: TransitionSet, universe?:any) {
         const transitions = await set.transitions()
         await this.transact(set.height, async (version) => {
             for (const transition of transitions) {
                 try {
-                    await version.transition({ ...transition, height: set.height })
+                    await version.transition({ ...transition, height: set.height }, universe)
                 } catch (err) {
                     if (err.message !== notAllowedErr) {
                         throw err
@@ -158,7 +155,7 @@ export class PolicyTree {
 
             const policyBlock: IBlock = await this.repo.blocks.get(policyCID)
 
-            resolve(await Policy.create(policyBlock, this.universe))
+            resolve(await Policy.create(policyBlock))
         })
         return this.policy
     }

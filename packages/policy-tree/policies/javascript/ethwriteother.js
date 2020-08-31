@@ -2,7 +2,8 @@ const GENESIS = -1,
     SEND_TOKEN = 0,
     RECEIVE_TOKEN = 1,
     SET_DATA = 2,
-    MINT_TOKEN = 3
+    MINT_TOKEN = 3,
+    WRITE_OTHER = 4
 
 const { setData, sendToken, receiveToken, mintToken, getData, getMeta } = getTree()
 
@@ -40,6 +41,9 @@ async function run() {
         case MINT_TOKEN:
             print("mint")
             return mintToken(metadata.token, new BigNumber(metadata.amount))
+        case WRITE_OTHER:
+            const other = await getAsset(metadata.did)
+            return setData(metadata.did, other.getData("hi"))
         default:
             throw new Error("unknown type: " + transition.type)
     }
