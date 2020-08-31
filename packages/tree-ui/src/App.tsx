@@ -1,7 +1,7 @@
 import React from 'react';
 import logo from './logo.svg';
 import './App.css';
-import { openedMemoryRepo, StellarBack, uploadBuffer, downloadFile, Policy } from 'policy-tree'
+import { TransitionTypes, openedMemoryRepo, StellarBack, uploadBuffer, downloadFile, Policy } from 'policy-tree'
 
 const aliceKeys = {
   publicKey: 'GBE3HUH4YAWYOUU4NISEIRAUVTXCUZUBMD6FPDSOHDWGGJEJJBH22TMD',
@@ -9,18 +9,22 @@ const aliceKeys = {
 }
 
 const policyStr = `
+const { setData } = global.getTree();
 async function run() {
-  const transition = await getTransition()
-  switch (transition.type) {
-      case "setdata":
-          await set(transition.metadata.key, transition.metadata.value)
-          return true
-      default:
-          throw new Error("unknown type: " + transition.type)
-  }
+    const transition = global.getTransition();
+    switch (transition.type) {
+        case -1:
+            return true;
+        case 2:
+            for (let key of Object.keys(transition.metadata)) {
+                await setData(key, transition.metadata[key]);
+            }
+            return true;
+        default:
+            throw new Error("unknown type: " + transition.type);
+    }
 }
-
-run()
+run();
 `
 
 async function run() {
@@ -40,17 +44,16 @@ async function run() {
   console.log("did: ", did)
 
   await stellar.transitionAsset(did, {
-    type: "setdata",
+    type: TransitionTypes.SET_DATA,
     metadata: {
-      key: "hello",
-      value: "world",
+      "hello":"world",
     }
   })
 
   console.log("getting asset")
   const tree = await stellar.getAsset(did)
   console.log('tree: ', tree)
-  console.log(await tree.get('hello'))
+  console.log((await tree.current()).getData('hello'))
 }
 
 run()

@@ -1,6 +1,7 @@
 export * from './policy'
 export * from './ethereum-skynet/ethereum'
 export * from './policytree/policytree'
+export * from './transitionset'
 export * from './hashmap'
 export * from './repo'
 export * from './stellar-skynet/stellar'

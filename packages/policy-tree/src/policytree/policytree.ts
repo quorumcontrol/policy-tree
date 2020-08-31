@@ -63,9 +63,9 @@ export class PolicyTree {
     constructor({ did, repo }: PolicyTreeConstructorOpts) {
         this.repo = repo
         this.did = did
-        this.dataStore = new VersionStore(this.repo, did)
+        this.dataStore = new VersionStore(repo, did)
         // this.valueStore = new VersionStore(this.repo, `${did}-value`)
-        this.metaStore = new CborStore(this.repo, `${did}-meta`)
+        this.metaStore = new CborStore(repo, `${did}-meta`)
     }
 
     async transact(height: number, transactor: (tree: PolicyTreeVersion) => Promise<boolean>) {

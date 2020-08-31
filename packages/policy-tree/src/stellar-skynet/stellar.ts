@@ -141,6 +141,7 @@ export class StellarBack {
     }
 
     private async getLocal(did: string) {
+        console.log("repo: ", this.repo)
         const tree = new PolicyTree({did, repo: this.repo})
 
         if (await tree.exists()) {
