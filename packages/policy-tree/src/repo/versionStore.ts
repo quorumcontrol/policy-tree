@@ -39,10 +39,11 @@ export class VersionStore {
                 state: nextState,
             })
             await Promise.all([
-                this.put('current', {
-                    height: height,
-                    state: nextState,
-                }),
+                // TODO: if nothing has changed, no need to update all this
+                this.put('current', height),
+                // TODO: patches aren't necessary since we're using the full state,
+                // but in the future it would be nice to just checkpoint the state
+                // and keep these patches in between
                 this.put(`${height}/patches`, {
                     patches: patches,
                     inversePatches: inversePatches,
@@ -75,8 +76,8 @@ export class VersionStore {
     }
 
     private async getCurrent() {
-        const curr = await this.getRepo<CurrDoc>('current')
-        return curr ? curr : { state: {}, height: 0 }
+        const height = await this.getRepo<number>('current')
+        return height ? {state: await this.getRepo<CurrDoc>(height.toString()), height: height} : { state: {}, height: 0 }
     }
 
     private put(key: string, val: any) {
