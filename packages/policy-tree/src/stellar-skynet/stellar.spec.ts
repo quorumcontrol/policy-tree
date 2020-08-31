@@ -8,7 +8,7 @@ import { makeBlock } from '../repo/block'
 import process from 'process'
 import { TransitionTypes } from '../transitionset'
 
-const setDataContract = fs.readFileSync('policies/javascript/setdata.js').toString()
+const setDataContract = fs.readFileSync('../policy-tree-policies/lib/demo/setdata.js').toString()
 
 const aliceKeys = {
     publicKey: 'GBE3HUH4YAWYOUU4NISEIRAUVTXCUZUBMD6FPDSOHDWGGJEJJBH22TMD',

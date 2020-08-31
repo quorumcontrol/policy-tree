@@ -5,7 +5,8 @@ import { PolicyTree } from '../policytree/policytree'
 import { expect } from 'chai'
 import { TransitionTypes } from '../transitionset'
 
-const policyBytes = fs.readFileSync('policies/javascript/setdata.js')
+const setDataContract = fs.readFileSync('../policy-tree-policies/lib/demo/setdata.js').toString()
+const universePolicy = fs.readFileSync('../policy-tree-policies/lib/demo/testuniverse.js').toString()
 
 describe('Policy', ()=> {
     let repo: any
@@ -18,7 +19,7 @@ describe('Policy', ()=> {
     })
 
     it('evaluates', async ()=> {
-        const policy = new Policy(policyBytes.toString())
+        const policy = new Policy(setDataContract)
         const tree = await PolicyTree.create({repo, did: "did:test"})
         const transition = {
             type: TransitionTypes.SET_DATA,
@@ -32,7 +33,6 @@ describe('Policy', ()=> {
     })
 
     it('works with a universe', async ()=> {
-        const universePolicy = fs.readFileSync('policies/javascript/testuniverse.js').toString()
         const transition = {
             type: TransitionTypes.SET_DATA,
             metadata: {

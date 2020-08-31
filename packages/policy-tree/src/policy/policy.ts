@@ -2,8 +2,22 @@ import { Sandbox } from 'lockdown'
 import { IBlock, decodeBlock, makeBlock } from '../repo/block'
 import { Transition } from '../transitionset'
 import { BigNumber } from 'bignumber.js'
-import { stringify } from 'querystring'
 import { PolicyTreeVersion, ReadOnlyPolicyTreeVersion } from '../policytree'
+
+export interface TreeWriterEndowment {
+    setData: PolicyTreeVersion['setData']
+    sendToken: PolicyTreeVersion['sendToken']
+    receiveToken: PolicyTreeVersion['receiveToken']
+    mintToken: PolicyTreeVersion['mint']
+}
+
+export interface StandardEndowments {
+    getTree: ()=> (TreeWriterEndowment & ReadOnlyPolicyTreeVersion)
+    BigNumber: typeof BigNumber
+    getTransition: ()=>Transition
+    getUniverse: ()=> any
+    print: typeof console.log
+}
 
 export class Policy {
     private sandbox:Sandbox
@@ -24,7 +38,7 @@ export class Policy {
     }
 
     evaluate(tree:PolicyTreeVersion, transition:Transition, universe?:any):Promise<any> {
-        return this.sandbox.evaluate({
+        const endowments:StandardEndowments = {
             getTree: ()=> {
                 return {
                     ...tree.readOnly(),
@@ -38,7 +52,8 @@ export class Policy {
             getTransition: ()=> transition,
             getUniverse: ()=> harden(universe),
             print: console.log,
-        })
+        }
+        return this.sandbox.evaluate({global: endowments})
     }
 }
 

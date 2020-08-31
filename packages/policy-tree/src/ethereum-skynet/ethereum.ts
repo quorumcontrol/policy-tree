@@ -173,7 +173,7 @@ export class EthereumBack {
             if (!transition) {
                 continue
             }
-            transition.sender = tran.args._from
+            transition.sender = tran.args.from
 
             let existing = transitionsByBlockHeight[tran.blockNumber]
             existing = existing || []

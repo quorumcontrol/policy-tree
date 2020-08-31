@@ -7,8 +7,8 @@ import { PolicyTree } from './policytree'
 import { TransitionSet, Transition, TransitionTypes } from '../transitionset';
 import BigNumber from 'bignumber.js'
 
-const setDataContract = fs.readFileSync('policies/javascript/setdata.js').toString()
-const testUniverseContract = fs.readFileSync('policies/javascript/testuniverse.js').toString()
+const setDataContract = fs.readFileSync('../policy-tree-policies/lib/demo/setdata.js').toString()
+const universePolicy = fs.readFileSync('../policy-tree-policies/lib/demo/testuniverse.js').toString()
 
 describe('PolicyTree', () => {
     let repo: any
@@ -139,7 +139,7 @@ describe('PolicyTree', () => {
     })
 
     it('supports a universe', async () => {
-        const block = await makeBlock(testUniverseContract)
+        const block = await makeBlock(universePolicy)
         await repo.blocks.put(block)
         let universe = {
             hello: () => 'notworld'

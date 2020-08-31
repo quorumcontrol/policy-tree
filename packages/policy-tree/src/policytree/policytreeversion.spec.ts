@@ -4,14 +4,10 @@ import { openedMemoryRepo } from '../repo'
 import fs from 'fs'
 import { makeBlock } from '../repo/block'
 import { PolicyTree } from './policytree'
-import { TransitionSet, Transition, TransitionTypes } from '../transitionset';
-import BigNumber from 'bignumber.js'
+import { TransitionTypes } from '../transitionset';
 import { PolicyTreeVersion } from './policytreeversion'
 
-// const setDataContract = fs.readFileSync('policies/javascript/setdata.js').toString()
-const helloLockContract = fs.readFileSync('policies/javascript/hellolock.js').toString()
-// const testUniverseContract = fs.readFileSync('policies/javascript/testuniverse.js').toString()
- 
+const helloLockContract = fs.readFileSync('../policy-tree-policies/lib/demo/hellolock.js').toString()
 
 describe("PolicyTreeVersion", ()=> {
 

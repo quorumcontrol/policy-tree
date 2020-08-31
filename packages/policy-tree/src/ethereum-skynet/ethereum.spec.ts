@@ -9,10 +9,10 @@ import { TransitionTypes } from '../transitionset'
 import BigNumber from 'bignumber.js'
 import { canonicalTokenName } from '../policytree/policytreeversion'
 
-const setDataContract = fs.readFileSync('policies/javascript/setdata.js').toString()
-const ethHelloWorldContract = fs.readFileSync('policies/javascript/ethhelloworld.js').toString()
-const ethStandardContract = fs.readFileSync('policies/javascript/ethstandard.js').toString()
-const ethWriteOtherContract = fs.readFileSync('policies/javascript/ethwriteother.js').toString()
+const setDataContract = fs.readFileSync('../policy-tree-policies/lib/demo/setdata.js').toString()
+const ethHelloWorldContract = fs.readFileSync('../policy-tree-policies/lib/demo/ethhelloworld.js').toString()
+const ethStandardContract = fs.readFileSync('../policy-tree-policies/lib/ethstandard.js').toString()
+const ethWriteOtherContract = fs.readFileSync('../policy-tree-policies/lib/demo/ethwriteother.js').toString()
 
 describe('ethereum', ()=> {
     let repo: Repo

@@ -1,7 +1,11 @@
-const { setData, getData } = getTree()
+import { StandardEndowments } from 'policy-tree'
+
+declare const global: StandardEndowments
+
+const { setData, getData } = global.getTree()
 
 async function run() {
-    const transition = await getTransition()
+    const transition = global.getTransition()
     switch (transition.type) {
         case -1:
             // do nothing on genesis

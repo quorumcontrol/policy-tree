@@ -1,8 +1,12 @@
-const { setData } = getTree()
+import { StandardEndowments } from 'policy-tree'
+
+declare const global: StandardEndowments
+
+const { setData } = global.getTree()
 
 async function run() {
-    const transition = await getTransition()
-    const universe = await getUniverse()
+    const transition = global.getTransition()
+    const universe = await global.getUniverse()
 
     if (universe.hello() !== 'world') {
         return false
