@@ -5,7 +5,7 @@
   "main": "lib/index.js",
   "scripts": {
     "test": "mocha --exit --recursive",
-    "local": "ganache-cli --deterministic -v -i 33343733366"
+    "local": "ganache-cli --deterministic -i 33343733366"
   },
   "author": "",
   "license": "ISC",

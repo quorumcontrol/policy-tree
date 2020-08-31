@@ -1,7 +1,7 @@
 import Policy from './policy'
 import fs from 'fs'
 import { openedMemoryRepo } from '../repo'
-import { PolicyTree } from '../policytree'
+import { PolicyTree } from '../policytree/policytree'
 import { expect } from 'chai'
 import { TransitionTypes } from '../transitionset'
 
@@ -26,9 +26,9 @@ describe('Policy', ()=> {
                 'test': 'test',
             }
         }
-        const resp = await policy.evaluate(tree, transition)
+        const resp = await policy.evaluate(await tree.current(), transition)
         expect(resp).to.be.true
-        expect(await tree.getData('test')).to.equal('test')
+        expect((await tree.current()).getData('test')).to.equal('test')
     })
 
     it('works with a universe', async ()=> {
@@ -46,9 +46,9 @@ describe('Policy', ()=> {
         const policy = new Policy(universePolicy, {
             hello: ()=> 'world'
         })
-        const resp = await policy.evaluate(tree, transition)
+        const resp = await policy.evaluate(await tree.current(), transition)
         expect(resp).to.be.true
-        expect(await tree.getData('test')).to.equal('test')
+        expect((await tree.current()).getData('test')).to.equal('test')
 
         // returns false when hello is not world
 
@@ -61,9 +61,9 @@ describe('Policy', ()=> {
                 'test': 'different',
             }
         }
-        const resp2 = await policyDiffUniverse.evaluate(tree, transition2)
+        const resp2 = await policyDiffUniverse.evaluate(await tree.current(), transition2)
         expect(resp2).to.be.false
-        expect(await tree.getData('test')).to.equal('test')
+        expect((await tree.current()).getData('test')).to.equal('test')
 
     })
 })

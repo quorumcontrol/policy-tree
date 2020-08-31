@@ -2,11 +2,12 @@ import { providers, Contract, Event, utils } from 'ethers'
 import PolicyTreeTransitionContract from './PolicyTreeTransitions.json'
 import debug from 'debug'
 import Repo from '../repo/repo'
-import { GenesisOptions, PolicyTree, ReadOnlyTree, GENESIS_KEY } from '../policytree'
+import { GenesisOptions, PolicyTree, GENESIS_KEY } from '../policytree/policytree'
 import { HashMap, serialize, deserialize } from '../hashmap'
 import { uploadBuffer, downloadFile } from '../skynet/skynet'
 import { Transition, TransitionSet, serializableTransition, transFromSerializeableTransition, SerializableTransition } from '../transitionset'
 import { makeBlock, decodeBits } from '../repo/block'
+import { ReadOnlyPolicyTreeVersion } from '../policytree'
 
 const log = debug('ethereum')
 
@@ -20,7 +21,7 @@ interface EthereumUniverse {
         id: typeof utils.id,
     },
     getLogs: typeof provider.getLogs,
-    getAsset: (did:string)=>Promise<ReadOnlyTree>,
+    getAsset: (did:string)=>Promise<ReadOnlyPolicyTreeVersion>,
 }
 
 export class EthereumBack {
@@ -37,7 +38,7 @@ export class EthereumBack {
                 }),
                 getLogs: provider.getLogs.bind(provider),
                 getAsset: async (did:string)=> {
-                    return (await this.getAsset(did)).readOnly()
+                    return (await (await this.getAsset(did)).current()).readOnly()
                 },
             }
         }
@@ -54,6 +55,7 @@ export class EthereumBack {
 
         const serialized = await serialize(hshMp, this.repo.blocks)
 
+        log("serialized size: ", serialized.byteLength)
         const siaUrl = await uploadBuffer(serialized)
         log("siaUrl: ", siaUrl)
 
@@ -145,7 +147,7 @@ export class EthereumBack {
             return tree
         }
         // get the latest and if the latest exists than make sure these transactions are greater 
-        const latest = await tree.lastTransitionSet()
+        const latest = (await tree.current()).height
 
         // go through all the transactions and if none of them are more recent, just move onto the next one
 
@@ -156,7 +158,7 @@ export class EthereumBack {
             if (tran.blockNumber > highestBlock) {
                 highestBlock = tran.blockNumber
             }
-            if (latest && tran.blockNumber <= latest.height ) {
+            if (tran.blockNumber <= latest ) {
                 // if this transaction has already been included, we can skip it
                 continue
             }

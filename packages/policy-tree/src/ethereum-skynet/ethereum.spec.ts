@@ -5,9 +5,9 @@ import { openedMemoryRepo } from '../repo'
 import { makeBlock } from '../repo/block'
 import fs from 'fs'
 import Repo from '../repo/repo'
-import { TransitionTypes, TransitionSet } from '../transitionset'
+import { TransitionTypes } from '../transitionset'
 import BigNumber from 'bignumber.js'
-import { canonicalTokenName } from '../policytree'
+import { canonicalTokenName } from '../policytree/policytreeversion'
 
 const setDataContract = fs.readFileSync('policies/javascript/setdata.js').toString()
 const ethHelloWorldContract = fs.readFileSync('policies/javascript/ethhelloworld.js').toString()
@@ -35,7 +35,7 @@ describe('ethereum', ()=> {
         }
 
         let tree = await eth.getAsset(did)
-        expect(await tree.lastTransitionSet()).to.be.undefined
+        // expect(await tree.lastTransitionSet()).to.be.undefined
         
         await eth.transitionAsset(did, {
             type: TransitionTypes.SET_DATA,
@@ -45,9 +45,9 @@ describe('ethereum', ()=> {
         })
 
         tree = await eth.getAsset(did)
-        expect(await tree.lastTransitionSet()).to.exist
+        // expect(await tree.lastTransitionSet()).to.exist
 
-        expect((await tree.getData('hi'))).to.equal('hi')
+        expect((await tree.current()).getData('hi')).to.equal('hi')
     })
 
     it('supports a universe', async ()=> {
@@ -63,7 +63,7 @@ describe('ethereum', ()=> {
         console.log("did: ", did)
 
         let tree = await eth.getAsset(did)
-        expect(await tree.lastTransitionSet()).to.be.undefined
+        expect((await tree.current()).height).to.equal(0)
         
         const transResponse = await eth.transitionAsset(did, {
             type: 1000,
@@ -71,9 +71,9 @@ describe('ethereum', ()=> {
         })
 
         tree = await eth.getAsset(did)
-        expect(await tree.lastTransitionSet()).to.exist
+        // expect(await tree.lastTransitionSet()).to.exist
 
-        expect((await tree.getData('block'))).to.include({number: transResponse.blockNumber})
+        expect((await tree.current()).getData('block')).to.include({number: transResponse.blockNumber})
     })
 
     it('sends coins through the standard contract', async ()=> {
