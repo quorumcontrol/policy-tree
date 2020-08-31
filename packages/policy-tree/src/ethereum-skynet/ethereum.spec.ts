@@ -35,7 +35,6 @@ describe('ethereum', ()=> {
         }
 
         let tree = await eth.getAsset(did)
-        // expect(await tree.lastTransitionSet()).to.be.undefined
         
         await eth.transitionAsset(did, {
             type: TransitionTypes.SET_DATA,
@@ -45,7 +44,6 @@ describe('ethereum', ()=> {
         })
 
         tree = await eth.getAsset(did)
-        // expect(await tree.lastTransitionSet()).to.exist
 
         expect((await tree.current()).getData('hi')).to.equal('hi')
     })
@@ -60,7 +58,6 @@ describe('ethereum', ()=> {
         if (!did) {
             throw new Error("no did returned")
         }
-        console.log("did: ", did)
 
         let tree = await eth.getAsset(did)
         expect((await tree.current()).height).to.equal(0)
@@ -71,7 +68,6 @@ describe('ethereum', ()=> {
         })
 
         tree = await eth.getAsset(did)
-        // expect(await tree.lastTransitionSet()).to.exist
 
         expect((await tree.current()).getData('block')).to.include({number: transResponse.blockNumber})
     })
@@ -81,14 +77,10 @@ describe('ethereum', ()=> {
         await repo.blocks.put(block)
 
         const eth = new EthereumBack(repo)
-        console.log("creating alice")
         const [aliceDid,] = await eth.createAsset({ policy: block.cid })
-        console.log("creating bob")
         const [bobDid,] = await eth.createAsset({ policy: block.cid })
         
-        console.log("getting alice")
         let alice = await eth.getAsset(aliceDid)
-        console.log("getting bob")
         let bob = await eth.getAsset(bobDid)
 
         await eth.transitionAsset(aliceDid, {
@@ -120,8 +112,6 @@ describe('ethereum', ()=> {
         })
 
         bob = await eth.getAsset(bobDid)
-        // expect((await bob.getBalance(canonicalTokenName(alice.did, 'aliceCoin'))).toString()).to.equal(new BigNumber(10).toString())
-    })  
-
-    
+        expect((await bob.current()).getBalance(canonicalTokenName(alice.did, 'aliceCoin')).toString()).to.equal(new BigNumber(10).toString())
+    })
 })

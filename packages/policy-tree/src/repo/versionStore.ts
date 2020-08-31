@@ -8,6 +8,7 @@ const log = debug("VersionStore")
 
 export type StateDoc = { [key: string]: any }
 type CurrDoc = {
+    previous?: number,
     height: number,
     state: StateDoc,
 }
@@ -27,6 +28,7 @@ export class VersionStore {
 
     async update(updater: (doc: StateDoc) => StateDoc, height: number) {
         try {
+            const previous = await this.current
             const [nextStateP, patches, inversePatches] = produceWithPatches(
                 (await this.current).state,
                 updater,
@@ -37,6 +39,7 @@ export class VersionStore {
             this.current = Promise.resolve({
                 height: height,
                 state: nextState,
+                previous: previous.height,
             })
             await Promise.all([
                 // TODO: if nothing has changed, no need to update all this
@@ -44,12 +47,13 @@ export class VersionStore {
                 // TODO: patches aren't necessary since we're using the full state,
                 // but in the future it would be nice to just checkpoint the state
                 // and keep these patches in between
-                this.put(`${height}/patches`, {
+                this.put(`patches/${height}`, {
                     patches: patches,
                     inversePatches: inversePatches,
                 }),
-                this.put(height.toString(), {
-                    nextState,
+                this.put(`states/${height}`, {
+                    previous: previous.height,
+                    state: nextState,
                 })
             ])
         } catch(err) {
@@ -67,6 +71,34 @@ export class VersionStore {
         return curr.state[key]
     }
 
+    // TODO: allow reverting to a state as well (for block reorgs)
+
+    async stateAt(height:number) {
+        log("getting state at height: ", height)
+        if (height < 0) {
+            throw new Error("height must be >= 0")
+        }
+        const current = await this.current
+        if (height >= current.height) {
+            return current.state
+        }
+
+        const traverser = async (h:number):Promise<StateDoc>=> {
+            const doc = await this.getRepo<CurrDoc>(`states/${h}`)
+            if (!doc) {
+                // sometimes the zero height doc is undefined (not stored)
+                // so just ship back an empty state
+                return {}
+            }
+            if (doc.previous >= height) {
+                return traverser(doc.previous)
+            }
+            return doc.state
+        }
+
+        return traverser(current.previous)
+    }
+
     private namespacedKey(strKey: string) {
         let dKey = new Key(strKey)
         if (this.namespace) {
@@ -77,7 +109,8 @@ export class VersionStore {
 
     private async getCurrent() {
         const height = await this.getRepo<number>('current')
-        return height ? {state: await this.getRepo<CurrDoc>(height.toString()), height: height} : { state: {}, height: 0 }
+        const doc = await this.getRepo<CurrDoc>(`states/${height}`)
+        return height ? {state: doc.state, height: height, previous: doc.previous} : { state: {}, height: 0, previous: undefined }
     }
 
     private put(key: string, val: any) {

@@ -113,35 +113,30 @@ describe('PolicyTree', () => {
         expect(hrend[1] / 1000000).to.be.lessThan(900)
     })
 
-    // it('gets latest transitionSet', async () => {
-    //     const block = await makeBlock(helloLockContract)
-    //     await repo.blocks.put(block)
-    //     const tree = await PolicyTree.create({repo, did: 'did:test'}, { policy: block.cid })
+    it('returns versioned data for heights', async ()=> {
+        const tree = await PolicyTree.create({ repo, did: 'did:test' })
+        await tree.transact(10, async (vers)=> {
+            vers.setData("hi", 10)
+            return true
+        })
 
-    //     const set = new TransitionSet({
-    //         source: 'test',
-    //         height: 0,
-    //         transitions: [
-    //             {
-    //                 type: TransitionTypes.SET_DATA,
-    //                 metadata: {
-    //                     '/hello': 'hi',
-    //                 }
-    //             },
-    //         ],
-    //         metadata: {
-    //             test: 24
-    //         },
-    //     })
+        await tree.transact(20, async (vers)=> {
+            vers.setData("hi", 20)
+            return true
+        })
 
-    //     await tree.applySet(set)
+        const treeAt0 = await tree.at(0)
+        expect(treeAt0.getData("hi")).to.be.undefined
 
-    //     const retSet = await tree.lastTransitionSet()
-    //     if (retSet === null) {
-    //         throw new Error("null ret set")
-    //     }
-    //     expect(retSet.source).to.equal(set.source)
-    // })
+        const treeAt11 = await tree.at(11)
+        expect(treeAt11.getData("hi")).to.equal(10)
+
+        const treeAt20 = await tree.at(20)
+        expect(treeAt20.getData("hi")).to.equal(20)
+
+        const treeAt200 = await tree.at(200)
+        expect(treeAt200.getData("hi")).to.equal(20)
+    })
 
     it('supports a universe', async () => {
         const block = await makeBlock(testUniverseContract)
@@ -149,7 +144,6 @@ describe('PolicyTree', () => {
         let universe = {
             hello: () => 'notworld'
         }
-
 
         const set = new TransitionSet({
             height: 1,
@@ -184,13 +178,6 @@ describe('PolicyTree', () => {
         const bob = await PolicyTree.create({ repo, did: 'did:bob' },{ policy: block.cid })
 
         const canonicalName = 'did:alice-test'
-
-        // await alice.transact(1, async (alice)=> {
-        //     alice.setValue("tes", new BigNumber(54).toString())
-        //     return true
-        // })
-
-        // expect((await alice.current()).getBalance("tes").toString()).to.equal(new BigNumber(54).toString())
 
         await alice.transact(1, async (alice) => {
             // alice can mint

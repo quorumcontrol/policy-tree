@@ -7,7 +7,7 @@ import Repo, { Key } from '../repo/repo'
 import { CborStore } from '../repo/datastore'
 import BigNumber from 'bignumber.js'
 import { VersionStore, StateDoc } from '../repo/versionStore'
-import { PolicyTreeVersion } from './policytreeversion'
+import { PolicyTreeVersion, ReadOnlyPolicyTreeVersion } from './policytreeversion'
 
 const log = debug("PolicyTree")
 
@@ -99,6 +99,11 @@ export class PolicyTree {
         const curr = await this.dataStore.current
         const policy = await this.fetchPolicy()
         return new PolicyTreeVersion({ did: this.did, height: curr.height, state: curr.state, policy: policy, getMeta: this.getMeta.bind(this) })
+    }
+
+    async at(height:number): Promise<ReadOnlyPolicyTreeVersion> {
+        const state = await this.dataStore.stateAt(height)
+        return new PolicyTreeVersion({ did: this.did, height: height, state: state, policy:null, getMeta: this.getMeta.bind(this) })
     }
 
     setMeta(key: string, value: any) {

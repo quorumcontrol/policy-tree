@@ -115,7 +115,9 @@ export class EthereumBack {
             tree = await PolicyTree.create({repo: this.repo, did, universe: this.baseUniverse}, genesis)
         }
 
-        return this.playTransactions(tree, did, await this.getEventsFor(did, genesisTrans.blockNumber + 1))
+        const height = (await tree.current()).height
+
+        return this.playTransactions(tree, did, await this.getEventsFor(did, height ? (height + 1) : (genesisTrans.blockNumber + 1)))
     }
 
     private async eventToTransition(evt: Event):Promise<Transition|null> {

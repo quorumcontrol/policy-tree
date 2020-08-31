@@ -48,4 +48,29 @@ describe('VersionStore', ()=> {
         }
     })
 
+    it('gets state at arbitrary heights', async ()=> {
+        const store = new VersionStore(repo)
+        await store.update((existing)=> {
+            existing['test'] = 10
+            return existing
+        }, 10)
+
+        await store.update((existing)=> {
+            existing['test'] = 100
+            return existing
+        }, 100)
+        
+        const genesis = await store.stateAt(0)
+        expect(genesis['test']).to.be.undefined
+        
+        const doc11 = await store.stateAt(11)
+        expect(doc11['test']).to.equal(10)
+
+        const doc99 = await store.stateAt(99)
+        expect(doc99['test']).to.equal(10)
+
+        const doc100 = await store.stateAt(100)
+        expect(doc100['test']).to.equal(100)
+    })
+
 })
