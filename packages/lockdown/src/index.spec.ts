@@ -30,4 +30,19 @@ describe("sanity", ()=> {
         })
         expect(result).to.equal('hi')
     })
+
+    it('prevents massive allocation', async ()=> {
+        const sandbox = new Sandbox(`
+            Array(100000)
+        `)
+        try {
+            await sandbox.evaluate({
+                print: harden(console.log)
+            })
+        } catch(err) {
+            expect(err.message).to.include("Exceeding maximum")
+            return
+        }
+        expect(false).to.be.true // should never get here
+    })
 })
