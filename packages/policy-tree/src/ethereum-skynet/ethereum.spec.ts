@@ -81,7 +81,7 @@ describe('ethereum', ()=> {
         const [aliceDid,] = await eth.createAsset({ policy: block.cid })
         const [bobDid,] = await eth.createAsset({ policy: block.cid })
         
-        let alice = await eth.getAsset(aliceDid)
+        // let alice = await eth.getAsset(aliceDid)
         let bob = await eth.getAsset(bobDid)
 
         // first we transition alice and bob through a few iterations

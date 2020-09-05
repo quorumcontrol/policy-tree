@@ -1,6 +1,4 @@
-import { StandardEndowments, HandlerExport } from 'policy-tree'
-
-declare const global: StandardEndowments
+import { HandlerExport } from 'policy-tree'
 
 enum TransitionTypes {
     GENESIS = -1,

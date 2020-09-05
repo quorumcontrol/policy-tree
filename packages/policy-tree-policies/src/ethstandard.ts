@@ -1,6 +1,4 @@
-import { StandardEndowments, HandlerExport, TransitionTree, Transition } from 'policy-tree'
-
-declare const global: StandardEndowments
+import {  HandlerExport, TransitionTree, Transition, EthereumUniverse } from 'policy-tree'
 
 enum TransitionTypes {
     GENESIS = -1,
@@ -16,12 +14,13 @@ const assertOwner = async (tree: TransitionTree, trans: Transition) => {
 
     const owners = (currentOwners || initialOwners)
     if (!owners.includes(trans.sender)) {
-        global.print("invalid sender")
+        log("invalid sender")
         return false
     }
+    return true
 }
 
-const exp: HandlerExport = {
+const exp: HandlerExport<EthereumUniverse> = {
     [TransitionTypes.GENESIS]: async (_tr, _tra, _u) => {
         return true
     },
@@ -39,14 +38,14 @@ const exp: HandlerExport = {
             return false
         }
         const metadata = transition.metadata
-        return tree.sendToken(metadata.token, metadata.dest, new global.BigNumber(metadata.amount), metadata.nonce)
+        return tree.sendToken(metadata.token, metadata.dest, new BigNumber(metadata.amount), metadata.nonce)
     },
-    [TransitionTypes.RECEIVE_TOKEN]: async (tree, transition, universe) => {
+    [TransitionTypes.RECEIVE_TOKEN]: async (tree, transition, {getAsset}) => {
         if (!(await assertOwner(tree, transition))) {
             return false
         }
         const metadata = transition.metadata
-        const otherTree = await universe.getAsset(metadata.from)
+        const otherTree = await getAsset(metadata.from)
         return tree.receiveToken(metadata.token, metadata.nonce, otherTree)
     },
     [TransitionTypes.MINT_TOKEN]: async (tree, transition) => {
@@ -54,7 +53,7 @@ const exp: HandlerExport = {
             return false
         }
         const metadata = transition.metadata
-        return tree.mintToken(metadata.token, new global.BigNumber(metadata.amount))
+        return tree.mintToken(metadata.token, new BigNumber(metadata.amount))
     },
 }
 

@@ -1,6 +1,4 @@
-import { StandardEndowments, HandlerExport } from 'policy-tree'
-
-declare const global: StandardEndowments
+import { HandlerExport } from 'policy-tree'
 
 enum TransitionTypes {
     GENESIS = -1,
@@ -10,12 +8,12 @@ enum TransitionTypes {
     MINT_TOKEN = 3,
 }
 
-const exp: HandlerExport = {
+const exp: HandlerExport<{hello: ()=>string}> = {
     [TransitionTypes.GENESIS]: async () => {
         return true
     },
-    [TransitionTypes.SET_DATA]: async (tree, transition, universe) => {
-        if (universe.hello() !== 'world') {
+    [TransitionTypes.SET_DATA]: async (tree, transition, {hello}) => {
+        if (hello() !== 'world') {
             return false
         }
 

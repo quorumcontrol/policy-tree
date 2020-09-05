@@ -1,4 +1,4 @@
-import { StandardEndowments, HandlerExport } from 'policy-tree'
+import { HandlerExport, EthereumUniverse } from 'policy-tree'
 
 enum TransitionTypes {
     GENESIS = -1,
@@ -8,15 +8,13 @@ enum TransitionTypes {
     MINT_TOKEN = 3,
 }
 
-declare const global: StandardEndowments
-
-const exp:HandlerExport = {
+const exp:HandlerExport<EthereumUniverse> = {
     [TransitionTypes.GENESIS]: async ()=> {
         return true
     },
-    [1000]: async (tree, transition, {eth})=> {
+    [1000]: async (tree, transition, {getBlock})=> {
         tree.setData("transHeight", transition.height)
-        tree.setData("block", await eth.getBlock())
+        tree.setData("block", await getBlock(transition.height))
         return true
     }
 }

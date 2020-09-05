@@ -13,7 +13,7 @@ export interface TreeWriterEndowment {
 
 export interface StandardEndowments {
     BigNumber: typeof BigNumber
-    print: typeof console.log
+    log: typeof console.log
 }
 
 export type TransitionTree = (TreeWriterEndowment & ReadOnlyPolicyTreeVersion)
@@ -35,7 +35,10 @@ export class Policy<UniverseType = any> {
     constructor(code: string) {
         this.original = code
         this.sandbox = new Sandbox(code) // TODO: opts?
-        this.namespace = this.sandbox.namespace()
+        this.namespace = this.sandbox.namespace({
+            log: harden(console.log),
+            BigNumber: harden(BigNumber),
+        })
     }
 
     toBlock() {
@@ -45,6 +48,7 @@ export class Policy<UniverseType = any> {
     async transition(tree: PolicyTreeVersion, transition: Transition, universe?: UniverseType): Promise<any> {
         const namespace = await this.namespace
         if (!namespace[transition.type]) {
+            console.error("undefined type: ", transition.type)
             return false
         }
 
