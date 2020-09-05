@@ -1,55 +1,71 @@
-import { StandardEndowments } from 'policy-tree'
+import { StandardEndowments, HandlerExport, TransitionTree, Transition } from 'policy-tree'
 
 declare const global: StandardEndowments
 
-const GENESIS = -1,
+enum TransitionTypes {
+    GENESIS = -1,
     SEND_TOKEN = 0,
     RECEIVE_TOKEN = 1,
     SET_DATA = 2,
     MINT_TOKEN = 3,
-    WRITE_OTHER = 4
+}
 
-const { setData, sendToken, receiveToken, mintToken, getData, getMeta } = global.getTree()
+const WRITE_OTHER = 4
 
-async function run() {
-    const transition = global.getTransition()
-    const metadata = transition.metadata
-
-    if (transition.type === GENESIS) {
-        return true
-    }
-
-    const { initialOwners } = await getMeta("/genesis")
-    const currentOwners = await getData("/owners")
+const assertOwner = async (tree: TransitionTree, trans: Transition) => {
+    const { initialOwners } = await tree.getMeta("/genesis")
+    const currentOwners = await tree.getData("/owners")
 
     const owners = (currentOwners || initialOwners)
-    if (!owners.includes(transition.sender)) {
+    if (!owners.includes(trans.sender)) {
         global.print("invalid sender")
         return false
     }
-
-    const { eth: { getAsset } } = global.getUniverse()
-
-    switch (transition.type) {
-        case SET_DATA:
-            for (let key of Object.keys(transition.metadata)) {
-                await setData(key, transition.metadata[key])
-            }
-            return true
-        case SEND_TOKEN:
-            global.print("send")
-            return sendToken(metadata.token, metadata.dest, new global.BigNumber(metadata.amount), metadata.nonce)
-        case RECEIVE_TOKEN:
-            const otherTree = await getAsset(metadata.from)
-            return receiveToken(metadata.token, metadata.nonce, otherTree)
-        case MINT_TOKEN:
-            global.print("mint")
-            return mintToken(metadata.token, new global.BigNumber(metadata.amount))
-        case WRITE_OTHER:
-            const other = await getAsset(metadata.did)
-            return setData(metadata.did, other.getData("hi"))
-        default:
-            throw new Error("unknown type: " + transition.type)
-    }
 }
-run()
+
+const exp: HandlerExport = {
+    [TransitionTypes.GENESIS]: async (_tr, _tra, _u) => {
+        return true
+    },
+    [TransitionTypes.SET_DATA]: async (tree, transition) => {
+        if (!(await assertOwner(tree, transition))) {
+            return false
+        }
+        for (let key of Object.keys(transition.metadata)) {
+            tree.setData(key, transition.metadata[key])
+        }
+        return true
+    },
+    [TransitionTypes.SEND_TOKEN]: async (tree, transition) => {
+        if (!(await assertOwner(tree, transition))) {
+            return false
+        }
+        const metadata = transition.metadata
+        return tree.sendToken(metadata.token, metadata.dest, new global.BigNumber(metadata.amount), metadata.nonce)
+    },
+    [TransitionTypes.RECEIVE_TOKEN]: async (tree, transition, universe) => {
+        if (!(await assertOwner(tree, transition))) {
+            return false
+        }
+        const metadata = transition.metadata
+        const otherTree = await universe.getAsset(metadata.from)
+        return tree.receiveToken(metadata.token, metadata.nonce, otherTree)
+    },
+    [TransitionTypes.MINT_TOKEN]: async (tree, transition) => {
+        if (!(await assertOwner(tree, transition))) {
+            return false
+        }
+        const metadata = transition.metadata
+        return tree.mintToken(metadata.token, new global.BigNumber(metadata.amount))
+    },
+    [WRITE_OTHER]: async (tree, transition, {getAsset}) => {
+        if (!(await assertOwner(tree, transition))) {
+            return false
+        }
+        const metadata = transition.metadata
+        const other = await getAsset(metadata.did)
+        return tree.setData(metadata.did, other.getData("hi"))
+    },
+}
+
+module.exports = exp

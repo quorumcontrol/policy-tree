@@ -18,7 +18,7 @@ describe('Policy', ()=> {
         await repo.close()
     })
 
-    it('evaluates', async ()=> {
+    it('transitions', async ()=> {
         const policy = new Policy(setDataContract)
         const tree = await PolicyTree.create({repo, did: "did:test"})
         const transition = {
@@ -27,7 +27,7 @@ describe('Policy', ()=> {
                 'test': 'test',
             }
         }
-        const resp = await policy.evaluate(await tree.current(), transition)
+        const resp = await policy.transition(await tree.current(), transition)
         expect(resp).to.be.true
         expect((await tree.current()).getData('test')).to.equal('test')
     })
@@ -44,7 +44,7 @@ describe('Policy', ()=> {
 
         // works when hello is world
         const policy = new Policy(universePolicy)
-        const resp = await policy.evaluate(await tree.current(), transition, {
+        const resp = await policy.transition(await tree.current(), transition, {
             hello: ()=> 'world'
         })
         expect(resp).to.be.true
@@ -59,7 +59,7 @@ describe('Policy', ()=> {
                 'test': 'different',
             }
         }
-        const resp2 = await policyDiffUniverse.evaluate(await tree.current(), transition2,{
+        const resp2 = await policyDiffUniverse.transition(await tree.current(), transition2,{
             hello: ()=> 'notworld'
         })
         expect(resp2).to.be.false

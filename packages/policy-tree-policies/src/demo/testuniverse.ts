@@ -1,27 +1,29 @@
-import { StandardEndowments } from 'policy-tree'
+import { StandardEndowments, HandlerExport } from 'policy-tree'
 
 declare const global: StandardEndowments
 
-const { setData } = global.getTree()
+enum TransitionTypes {
+    GENESIS = -1,
+    SEND_TOKEN = 0,
+    RECEIVE_TOKEN = 1,
+    SET_DATA = 2,
+    MINT_TOKEN = 3,
+}
 
-async function run() {
-    const transition = global.getTransition()
-    const universe = await global.getUniverse()
+const exp: HandlerExport = {
+    [TransitionTypes.GENESIS]: async () => {
+        return true
+    },
+    [TransitionTypes.SET_DATA]: async (tree, transition, universe) => {
+        if (universe.hello() !== 'world') {
+            return false
+        }
 
-    if (universe.hello() !== 'world') {
-        return false
-    }
-
-    switch (transition.type) {
-        case -1:
-            return true
-        case 2:
-            for (let key of Object.keys(transition.metadata)) {
-                await setData(key, transition.metadata[key])
-            }
-            return true
-        default:
-            throw new Error("unknown type: " + transition.type)
+        for (let key of Object.keys(transition.metadata)) {
+            tree.setData(key, transition.metadata[key])
+        }
+        return true
     }
 }
-run()
+
+module.exports = exp

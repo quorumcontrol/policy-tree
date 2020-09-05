@@ -108,8 +108,11 @@ export class Sandbox {
         this.transformed = transformed
     }
 
-    async namespace(evalEndowments={}):Promise<any> {
+    async namespace<T=any>(evalEndowments={}):Promise<T> {
         const src = this.transformed.src
+        // we can't just let import/export and module stuff happen here
+        // because the transformer wraps the code and then import/export is no longer
+        // at the top level
         let mod = {exports: {}}
         const endowments =  {
             ...this.globalEndowments, 
@@ -127,7 +130,7 @@ export class Sandbox {
             }
         })
         await compartment.import("main.js")
-        return mod.exports
+        return mod.exports as T
     }
 
     evaluate(evalEndowments={}) {

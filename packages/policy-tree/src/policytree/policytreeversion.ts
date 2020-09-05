@@ -23,6 +23,7 @@ export interface ReadOnlyPolicyTreeVersion {
     getData: PolicyTreeVersion['getData'],
     getPayment: PolicyTreeVersion['getPayment'],
     getBalance: PolicyTreeVersion['getBalance'],
+    getMeta: MetaGetter,
 }
 
 type MetaGetter = (key:string)=>Promise<any>
@@ -151,7 +152,7 @@ export class PolicyTreeVersion {
             throw new Error("transition called with no policy attached")
         }
         log("transition: ", trans)
-        let res = await this.policy.evaluate(this, trans, universe)
+        let res = await this.policy.transition(this, trans, universe)
         log("res: ", res, ' from transition: ', trans)
     }
 }

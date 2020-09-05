@@ -12,49 +12,53 @@ export interface TreeWriterEndowment {
 }
 
 export interface StandardEndowments {
-    getTree: ()=> (TreeWriterEndowment & ReadOnlyPolicyTreeVersion)
     BigNumber: typeof BigNumber
-    getTransition: ()=>Transition
-    getUniverse: ()=> any
     print: typeof console.log
 }
 
-export class Policy {
-    private sandbox:Sandbox
-    private original:string
+export type TransitionTree = (TreeWriterEndowment & ReadOnlyPolicyTreeVersion)
 
-    static async create(policyBlock:IBlock) {
+export type HandlerFunc<UniverseType = any> = (tree: TransitionTree, transition: Transition, universe: UniverseType) => Promise<any>
+
+export type HandlerExport<UniverseType = any> = { [key: number]: HandlerFunc<UniverseType> }
+
+export class Policy<UniverseType = any> {
+    private sandbox: Sandbox
+    private original: string
+    private namespace: Promise<HandlerExport<UniverseType>>
+
+    static async create<UniverseType = any>(policyBlock: IBlock) {
         const code = await decodeBlock(policyBlock)
-        return new Policy(code)
+        return new Policy<UniverseType>(code)
     }
 
-    constructor(code:string) {
+    constructor(code: string) {
         this.original = code
         this.sandbox = new Sandbox(code) // TODO: opts?
+        this.namespace = this.sandbox.namespace()
     }
 
     toBlock() {
         return makeBlock(this.original)
     }
 
-    evaluate(tree:PolicyTreeVersion, transition:Transition, universe?:any):Promise<any> {
-        const endowments:StandardEndowments = {
-            getTree: ()=> {
-                return {
-                    ...tree.readOnly(),
-                    setData: (key:string, val:any)=> tree.setData(key,val),
-                    sendToken: (canonicalTokenName:string, dest:string, amount:BigNumber, nonce:string)=> tree.sendToken(canonicalTokenName, dest, amount, nonce),
-                    receiveToken: (canonicalTokenName:string, nonce:string, otherTree: ReadOnlyPolicyTreeVersion)=> tree.receiveToken(canonicalTokenName, nonce, otherTree),
-                    mintToken: (tokenName:string, amount:BigNumber)=> tree.mint(tokenName, amount),
-                }
-            },
-            BigNumber: harden(BigNumber),
-            getTransition: ()=> transition,
-            getUniverse: ()=> harden(universe),
-            print: console.log,
+    async transition(tree: PolicyTreeVersion, transition: Transition, universe?: UniverseType): Promise<any> {
+        const namespace = await this.namespace
+        if (!namespace[transition.type]) {
+            return false
         }
-        return this.sandbox.evaluate({global: endowments})
+
+        const transitionTree = harden({
+            ...tree.readOnly(),
+            setData: (key: string, val: any) => tree.setData(key, val),
+            sendToken: (canonicalTokenName: string, dest: string, amount: BigNumber, nonce: string) => tree.sendToken(canonicalTokenName, dest, amount, nonce),
+            receiveToken: (canonicalTokenName: string, nonce: string, otherTree: ReadOnlyPolicyTreeVersion) => tree.receiveToken(canonicalTokenName, nonce, otherTree),
+            mintToken: (tokenName: string, amount: BigNumber) => tree.mint(tokenName, amount),
+        })
+
+        return namespace[transition.type](transitionTree, transition, harden(universe))
     }
+
 }
 
 export default Policy
