@@ -2,6 +2,19 @@ import 'ses'
 import { makeMeteringTransformer, makeMeter } from 'transform-metering/dist/transform-metering.cjs.js';
 import * as babelCore from '@babel/core';
 
+interface CompartmentOpts {
+    resolveHook(moduleSpecifier:string, moduleReferrer:string):any
+    importHook(specifier:string):Promise<{namespace:any}>
+}
+
+declare const StaticModuleRecord:any
+declare const lockdown:any;
+declare class Compartment {
+    constructor(endowments: any, _dunno?: any, opts?:CompartmentOpts);
+    evaluate(code:string, endowments?:any):any;
+    import(specifier:string):Promise<{namespace:any}>
+}
+
 const unsafeConstructorNames = {
     Array: 'Array',
     ArrayBuffer: 'ArrayBuffer',
@@ -37,12 +50,6 @@ const sanitizedArrayConstructors = (maxSize:number) => {
         })
         return memo
     }, {})
-}
-
-declare const lockdown:any;
-declare class Compartment {
-    constructor(opts: any);
-    evaluate(code:string, endowments?:any):any;
 }
 
 const transformer = makeMeteringTransformer(babelCore)
@@ -96,9 +103,31 @@ export class Sandbox {
         const transformed = transformer.rewrite({
             src: code,
             endowments: { getMeter },
-            sourceType: 'script',
+            sourceType: 'module',
         })
         this.transformed = transformed
+    }
+
+    async namespace(evalEndowments={}):Promise<any> {
+        const src = this.transformed.src
+        let mod = {exports: {}}
+        const endowments =  {
+            ...this.globalEndowments, 
+            ...this.transformed.endowments, 
+            ...evalEndowments,
+            module: mod,
+        }
+        const compartment = new Compartment(endowments, {}, {
+            importHook: async (specifier) => {
+                return new StaticModuleRecord(src, specifier)
+            },
+            resolveHook: (specifier,referrer) => {
+                console.error("we never expect the resolve hook to be called: ", specifier, referrer)
+                throw new Error("Unsupported")
+            }
+        })
+        await compartment.import("main.js")
+        return mod.exports
     }
 
     evaluate(evalEndowments={}) {
