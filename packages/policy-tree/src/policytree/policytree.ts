@@ -2,10 +2,9 @@ import CID from 'cids'
 import { makeBlock, IBlock } from '../repo/block'
 import { Policy } from '../policy'
 import debug from 'debug'
-import { Transition, TransitionSet, CanonicalTransitionSet, TransitionTypes } from '../transitionset'
-import Repo, { Key } from '../repo/repo'
+import { TransitionSet, TransitionTypes } from '../transitionset'
+import Repo from '../repo/repo'
 import { CborStore } from '../repo/datastore'
-import BigNumber from 'bignumber.js'
 import { VersionStore, StateDoc } from '../repo/versionStore'
 import { PolicyTreeVersion, ReadOnlyPolicyTreeVersion } from './policytreeversion'
 
@@ -46,6 +45,9 @@ export class PolicyTree {
         opts.repo.blocks.put(genesisBlock)
         const tree = new PolicyTree(opts)
         await tree.setMeta(GENESIS_KEY, genesis)
+        for (let key of Object.keys(genesis.metadata)) {
+            await tree.setMeta(key, genesis.metadata[key])
+        }
 
         if (genesis.policy) {
             await tree.transact(0, async (version) => {

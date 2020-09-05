@@ -1,4 +1,4 @@
-// import from 'mocha'
+import 'mocha'
 import { expect } from 'chai';
 import { Repo, openedMemoryRepo, PolicyTree } from 'policy-tree';
 import * as fs from 'fs';
@@ -45,7 +45,7 @@ describe("EthStandardPolicy", ()=> {
             ]
         })
         await tree.applySet(set, {
-            eth: {getAsset: ():undefined=>undefined}
+            getAsset: ():undefined=>undefined
         })
         const current = await tree.current()
         expect(current.getData("hi")).to.equal('hi')

@@ -1,7 +1,7 @@
 import { Sandbox } from 'lockdown'
 import { IBlock, decodeBlock, makeBlock } from '../repo/block'
 import { Transition } from '../transitionset'
-import { BigNumber } from 'bignumber.js'
+import { BigNumber } from 'ethers'
 import { PolicyTreeVersion, ReadOnlyPolicyTreeVersion } from '../policytree'
 
 export interface TreeWriterEndowment {

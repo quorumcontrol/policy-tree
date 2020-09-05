@@ -5,7 +5,7 @@ import fs from 'fs'
 import { makeBlock } from '../repo/block'
 import { PolicyTree } from './policytree'
 import { TransitionSet, Transition, TransitionTypes } from '../transitionset';
-import BigNumber from 'bignumber.js'
+import {BigNumber} from 'ethers'
 
 const setDataContract = fs.readFileSync('../policy-tree-policies/lib/demo/setdata.js').toString()
 const universePolicy = fs.readFileSync('../policy-tree-policies/lib/demo/testuniverse.js').toString()
@@ -181,25 +181,25 @@ describe('PolicyTree', () => {
 
         await alice.transact(1, async (alice) => {
             // alice can mint
-            alice.mint('test', new BigNumber(100))
-            expect((alice.getBalance(canonicalName)).toString()).to.equal(new BigNumber(100).toString())
+            alice.mint('test', BigNumber.from(100))
+            expect((alice.getBalance(canonicalName)).toString()).to.equal(BigNumber.from(100).toString())
 
             // alice can do a send to bob for 55
-            expect(alice.sendToken(canonicalName, bob.did, new BigNumber(55), 'abc')).to.not.be.false
+            expect(alice.sendToken(canonicalName, bob.did, BigNumber.from(55), 'abc')).to.not.be.false
             // but not for another 50
-            expect(alice.sendToken(canonicalName, bob.did, new BigNumber(50), 'def')).to.be.false
+            expect(alice.sendToken(canonicalName, bob.did, BigNumber.from(50), 'def')).to.be.false
 
             return true
         })
 
         const aliceReadOnly = (await alice.current()).readOnly()
 
-        expect(aliceReadOnly.getBalance(canonicalName).toString()).to.equal(new BigNumber(45).toString())
+        expect(aliceReadOnly.getBalance(canonicalName).toString()).to.equal(BigNumber.from(45).toString())
 
         await bob.transact(1, async (bob) => {
             // bob can receive
             bob.receiveToken(canonicalName, 'abc', aliceReadOnly)
-            expect((bob.getBalance(canonicalName)).toString()).to.equal(new BigNumber(55).toString())
+            expect((bob.getBalance(canonicalName)).toString()).to.equal(BigNumber.from(55).toString())
 
             // but not twice
             expect(bob.receiveToken(canonicalName, 'abc', aliceReadOnly)).to.be.false
@@ -208,22 +208,22 @@ describe('PolicyTree', () => {
             expect(bob.receiveToken(canonicalName, 'def', aliceReadOnly)).to.be.false
 
             // and bob can send back to alice
-            expect(bob.sendToken(canonicalName, aliceReadOnly.did, new BigNumber(54), 'def')).to.be.true
-            expect((bob.getBalance(canonicalName)).toString()).to.equal(new BigNumber(1).toString())
+            expect(bob.sendToken(canonicalName, aliceReadOnly.did, BigNumber.from(54), 'def')).to.be.true
+            expect((bob.getBalance(canonicalName)).toString()).to.equal(BigNumber.from(1).toString())
             return true
         })
 
         const bobReadOnly = (await bob.current()).readOnly()
 
         await alice.transact(2, async (alice)=> {
-            expect(alice.getBalance(canonicalName).toString()).to.equal(new BigNumber(45).toString())
+            expect(alice.getBalance(canonicalName).toString()).to.equal(BigNumber.from(45).toString())
             expect(alice.receiveToken(canonicalName, 'def', bobReadOnly)).to.be.true
             return true
         })
 
         expect((await alice.current()).height).to.equal(2)
 
-        expect((await alice.current()).getBalance(canonicalName).toString()).to.equal(new BigNumber(45 + 54).toString())
+        expect((await alice.current()).getBalance(canonicalName).toString()).to.equal(BigNumber.from(45 + 54).toString())
     })
 
 })

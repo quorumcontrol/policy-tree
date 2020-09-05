@@ -19,6 +19,7 @@ export interface EthereumUniverse {
     getBlock: typeof provider.getBlock,
     utils: {
         id: typeof utils.id,
+        hexZeroPad: typeof utils.hexZeroPad,
     },
     getLogs: typeof provider.getLogs,
     getAsset: (did: string) => Promise<ReadOnlyPolicyTreeVersion>,
@@ -33,6 +34,7 @@ export class EthereumBack {
             getBlock: provider.getBlock.bind(provider),
             utils: harden({
                 id: utils.id.bind(utils),
+                hexZeroPad: utils.hexZeroPad.bind(utils),
             }),
             getLogs: provider.getLogs.bind(provider),
             getAsset: async (did: string) => {

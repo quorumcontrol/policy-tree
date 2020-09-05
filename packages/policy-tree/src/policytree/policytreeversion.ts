@@ -1,6 +1,6 @@
 import { Key } from '../repo/repo'
 import { StateDoc } from "../repo/versionStore";
-import BigNumber from 'bignumber.js'
+import { BigNumber } from 'ethers'
 import { Transition } from '../transitionset';
 import Policy from '../policy/policy';
 import debug from 'debug';
@@ -54,7 +54,7 @@ export class PolicyTreeVersion {
     mint(tokenName: string, amount: BigNumber) {
         const key = canonicalTokenName(this.did, tokenName)
         const currentBalance = this.getBalance(key)
-        this.setValue(key, currentBalance.plus(amount).toString())
+        this.setValue(key, currentBalance.add(amount).toString())
         return true
     }
 
@@ -75,7 +75,7 @@ export class PolicyTreeVersion {
             return false
         }
 
-        const newBalance = currentBalance.minus(amount).toString()
+        const newBalance = currentBalance.sub(amount).toString()
         log("Send token updating balance to: ", newBalance)
         this.setValue(canonicalTokenName, newBalance)
         this.setValue(paymentKey, { dest, amount: amount.toString() })
@@ -96,7 +96,7 @@ export class PolicyTreeVersion {
         }
         // if not then write it out
         const currentBalance = this.getBalance(canonicalTokenName)
-        const newBalance = currentBalance.plus(new BigNumber(otherTreesPayment.amount)).toString()
+        const newBalance = currentBalance.add(BigNumber.from(otherTreesPayment.amount)).toString()
         log("updating ", this.did, " balance from: ", currentBalance.toString(), " to: ", newBalance)
         this.setValue(canonicalTokenName, newBalance)
         this.setValue(`${canonicalTokenName}/receives/${nonce}`, otherTreesPayment)
@@ -105,7 +105,7 @@ export class PolicyTreeVersion {
 
     getBalance(canonicalTokenName: string): BigNumber {
         const val = this.getValue(canonicalTokenName)
-        return new BigNumber(val || 0)
+        return BigNumber.from(val || 0)
     }
 
     setData(key: string, value: any) {

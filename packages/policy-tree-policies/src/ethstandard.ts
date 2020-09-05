@@ -38,7 +38,7 @@ const exp: HandlerExport<EthereumUniverse> = {
             return false
         }
         const metadata = transition.metadata
-        return tree.sendToken(metadata.token, metadata.dest, new BigNumber(metadata.amount), metadata.nonce)
+        return tree.sendToken(metadata.token, metadata.dest, BigNumber.from(metadata.amount), metadata.nonce)
     },
     [TransitionTypes.RECEIVE_TOKEN]: async (tree, transition, {getAsset}) => {
         if (!(await assertOwner(tree, transition))) {
@@ -53,7 +53,7 @@ const exp: HandlerExport<EthereumUniverse> = {
             return false
         }
         const metadata = transition.metadata
-        return tree.mintToken(metadata.token, new BigNumber(metadata.amount))
+        return tree.mintToken(metadata.token, BigNumber.from(metadata.amount))
     },
 }
 
