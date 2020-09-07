@@ -5,6 +5,7 @@ const log = require('debug')('heaventest')
 const HeavenToken = contract.fromArtifact('HeavenToken');
 
 const FWEI = 0;
+const MANA = 1;
 
 describe('HeavenToken', function() {
     const [owner, alice, bob] = accounts;
@@ -12,6 +13,22 @@ describe('HeavenToken', function() {
     beforeEach(async function() {
         this.heavenToken = await HeavenToken.new({ from: owner });
     });
+
+    it('elevates', async function() {
+        const val = 100000
+        const hsh = web3.utils.keccak256("test")
+
+        await this.heavenToken.deposit({ from: alice, value: val })
+        await this.heavenToken.convertFWEIToMana(val, { from: alice })
+        expect((await this.heavenToken.balanceOf(alice, MANA)).toString()).to.equal(val.toString())
+        const resp = await this.heavenToken.elevate(val, hsh, { from: alice })
+        expect((await this.heavenToken.balanceOf(alice, MANA)).toString()).to.equal("0")
+        console.log("resp: ", resp)
+        expect(resp.logs[1].event).to.equal('Elevate')
+        expect(resp.logs[1].args.from).to.equal(alice)
+        expect(resp.logs[1].args.amount.toString()).to.equal(val.toString())
+        expect(resp.logs[1].args.destination).to.equal(hsh)
+    })
 
     describe('offer handling', () => {
         it('transfers FETH the first time, but fails trying to reuse data', async function() {
@@ -50,7 +67,7 @@ describe('HeavenToken', function() {
 
         beforeEach(async function() {
             depAmount = web3.utils.toWei("0.25", 'ether');
-            console.log("deposit: ", await this.heavenToken.deposit({ from: alice, value: depAmount }))
+            await this.heavenToken.deposit({ from: alice, value: depAmount })
         })
 
         it('accepts eth and creates FWEI', async function() {
