@@ -8,6 +8,7 @@ import Repo from '../repo/repo'
 import { TransitionTypes } from '../transitionset'
 import BigNumber from 'bignumber.js'
 import { canonicalTokenName } from '../policytree/policytreeversion'
+import { providers } from 'ethers'
 
 const setDataContract = fs.readFileSync('../policy-tree-policies/lib/demo/setdata.js').toString()
 const ethHelloWorldContract = fs.readFileSync('../policy-tree-policies/lib/demo/ethhelloworld.js').toString()
@@ -16,8 +17,13 @@ const ethWriteOtherContract = fs.readFileSync('../policy-tree-policies/lib/demo/
 
 describe('ethereum', ()=> {
     let repo: Repo
+    let eth: EthereumBack
+
     beforeEach(async () => {
         repo = await openedMemoryRepo('ethereum')
+        const provider = new providers.JsonRpcProvider()
+        const signer = provider.getSigner()
+        eth = new EthereumBack(repo, provider, signer)
     })
 
     afterEach(async () => {
@@ -27,8 +33,6 @@ describe('ethereum', ()=> {
     it('creates and transitions', async ()=> {
         const block = await makeBlock(setDataContract)
         await repo.blocks.put(block)
-
-        const eth = new EthereumBack(repo)
 
         const [did,] = await eth.createAsset({ policy: block.cid })
         if (!did) {
@@ -53,8 +57,6 @@ describe('ethereum', ()=> {
         const block = await makeBlock(ethHelloWorldContract)
         await repo.blocks.put(block)
 
-        const eth = new EthereumBack(repo)
-
         const [did,] = await eth.createAsset({ policy: block.cid })
         if (!did) {
             throw new Error("no did returned")
@@ -77,7 +79,6 @@ describe('ethereum', ()=> {
         const block = await makeBlock(ethWriteOtherContract)
         await repo.blocks.put(block)
 
-        const eth = new EthereumBack(repo)
         const [aliceDid,] = await eth.createAsset({ policy: block.cid })
         const [bobDid,] = await eth.createAsset({ policy: block.cid })
         
@@ -130,7 +131,6 @@ describe('ethereum', ()=> {
         const block = await makeBlock(ethStandardContract)
         await repo.blocks.put(block)
 
-        const eth = new EthereumBack(repo)
         const [aliceDid,] = await eth.createAsset({ policy: block.cid })
         const [bobDid,] = await eth.createAsset({ policy: block.cid })
         

@@ -1,6 +1,6 @@
 import 'mocha'
 import { expect } from 'chai'
-import { EthereumBack, signer, provider } from './ethereum'
+import { EthereumBack } from './ethereum'
 import { openedMemoryRepo } from '../repo'
 import { makeBlock } from '../repo/block'
 import fs from 'fs'
@@ -13,12 +13,18 @@ import { TransitionTypes } from '../transitionset'
 const liquidContract = fs.readFileSync('../policy-tree-policies/lib/liquid.js').toString()
 const ethStandardContract = fs.readFileSync('../policy-tree-policies/lib/ethstandard.js').toString()
 
-export const heavenToken = new Contract(HeavenTokenJSON.networks['33343733366'].address, HeavenTokenJSON.abi, signer)
 
 describe('liquid', ()=> {
     let repo: Repo
+    let eth: EthereumBack
+    let heavenToken: Contract
+
     beforeEach(async () => {
-        repo = await openedMemoryRepo('ethereum')
+        repo = await openedMemoryRepo('liquid')
+        const provider = new providers.JsonRpcProvider()
+        const signer = provider.getSigner()
+        eth = new EthereumBack(repo, provider, signer)
+        heavenToken = new Contract(HeavenTokenJSON.networks['33343733366'].address, HeavenTokenJSON.abi, signer)
     })
 
     afterEach(async () => {
@@ -30,9 +36,6 @@ describe('liquid', ()=> {
         const standardContract = await makeBlock(ethStandardContract)
         await repo.blocks.put(liquidContractBlock)
         await repo.blocks.put(standardContract)
-
-        const eth = new EthereumBack(repo)
-        // const bob = provider.getSigner(1)
 
         const [did,] = await eth.createAsset({ 
             policy: liquidContractBlock.cid,

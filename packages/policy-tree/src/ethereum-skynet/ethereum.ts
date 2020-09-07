@@ -1,4 +1,4 @@
-import { providers, Contract, Event, utils } from 'ethers'
+import { providers, Contract, Event, utils, Signer } from 'ethers'
 import PolicyTreeTransitionContract from './PolicyTreeTransitions.json'
 import debug from 'debug'
 import Repo from '../repo/repo'
@@ -11,25 +11,25 @@ import { ReadOnlyPolicyTreeVersion } from '../policytree'
 
 const log = debug('ethereum')
 
-export const provider = new providers.JsonRpcProvider()
-export const signer = provider.getSigner()
-export const contract = new Contract(PolicyTreeTransitionContract.networks['33343733366'].address, PolicyTreeTransitionContract.abi, signer)
-
 export interface EthereumUniverse {
-    getBlock: typeof provider.getBlock
+    getBlock: providers.Provider['getBlock']
     utils: {
         id: typeof utils.id
         hexZeroPad: typeof utils.hexZeroPad
         decodeAbi: utils.AbiCoder['decode']
     },
-    getLogs: typeof provider.getLogs
+    getLogs: providers.Provider['getLogs']
     getAsset: (did: string) => Promise<ReadOnlyPolicyTreeVersion>
 }
 
 export class EthereumBack {
     repo: Repo
     baseUniverse: EthereumUniverse
-    constructor(repo: Repo) {
+    contract: Contract
+    provider: providers.Provider
+    signer: Signer
+
+    constructor(repo: Repo, provider: providers.Provider, signer: Signer) {
         this.repo = repo
         this.baseUniverse = {
             getBlock: provider.getBlock.bind(provider),
@@ -43,10 +43,13 @@ export class EthereumBack {
                 return (await (await this.getAsset(did)).current()).readOnly()
             },
         }
+        this.provider = provider
+        this.signer = signer
+        this.contract = new Contract(PolicyTreeTransitionContract.networks['33343733366'].address, PolicyTreeTransitionContract.abi, signer)
     }
 
     async createAsset(genesis: GenesisOptions): Promise<[string]> {
-        const sendingAddress = await signer.getAddress()
+        const sendingAddress = await this.signer.getAddress()
         if (!genesis.initialOwners) {
             genesis.initialOwners = [sendingAddress]
         }
@@ -62,7 +65,7 @@ export class EthereumBack {
 
         const bloom = hshMp.cid.multihash.slice(2) // first 2 bytes are codec and length
 
-        const resp = await contract.log(bloom, Buffer.from(siaUrl))
+        const resp = await this.contract.log(bloom, Buffer.from(siaUrl))
         log("create resp: ", resp)
         return [`did:eth:${resp.blockNumber}-${sendingAddress}-${resp.hash}`]
     }
@@ -74,7 +77,7 @@ export class EthereumBack {
     async transitionAsset(did: string, trans: Transition) {
         const blk = await makeBlock(serializableTransition(trans))
         const bloom = utils.id(did)
-        return await contract.log(bloom, blk.data)
+        return await this.contract.log(bloom, blk.data)
     }
 
     private async getLocal(did: string) {
@@ -88,15 +91,15 @@ export class EthereumBack {
     }
 
     private getEventsFor(did: string, height: number, max?: number) {
-        const filter = contract.filters.Transition(null, utils.id(did))
-        return contract.queryFilter(filter, height, max)
+        const filter = this.contract.filters.Transition(null, utils.id(did))
+        return this.contract.queryFilter(filter, height, max)
     }
 
     async getAsset(did: string, maxBlockHeight?: number) {
         log("get asset: ", did)
         const idParts = did.split(':')[2] // comes in the format did:eth:${resp.blockNumber}-${sendingAddress}-${resp.transactionHash}
         const [_blockNumberStr, _sendingAddress, transHash] = idParts.split('-')
-        const genesisTrans = await provider.getTransactionReceipt(transHash)
+        const genesisTrans = await this.provider.getTransactionReceipt(transHash)
         log("genesis tx: ", genesisTrans, " logs: ", genesisTrans.logs)
 
         log("genesis: ", genesisTrans)
@@ -137,7 +140,7 @@ export class EthereumBack {
     }
 
     private async genesisToHashMap(trans: providers.TransactionReceipt): Promise<HashMap | null> {
-        const transition = contract.interface.decodeEventLog("Transition", trans.logs[0].data).transition
+        const transition = this.contract.interface.decodeEventLog("Transition", trans.logs[0].data).transition
 
         const siaUrl: string = Buffer.from(transition.slice(2), 'hex').toString('utf-8')
         const mpBits = await downloadFile(siaUrl)
