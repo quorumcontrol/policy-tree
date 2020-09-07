@@ -11,6 +11,8 @@ import { ReadOnlyPolicyTreeVersion } from '../policytree'
 
 const log = debug('ethereum')
 
+const confirmationsRequired = 1
+
 export interface EthereumUniverse {
     getBlock: providers.Provider['getBlock']
     utils: {
@@ -72,9 +74,11 @@ export class EthereumBack {
 
         const bloom = hshMp.cid.multihash.slice(2) // first 2 bytes are codec and length
 
-        const resp = await this.contract.log(bloom, Buffer.from(siaUrl))
+        const resp:providers.TransactionResponse = await this.contract.log(bloom, Buffer.from(siaUrl))
         log("create resp: ", resp)
-        return [`did:eth:${resp.blockNumber}-${sendingAddress}-${resp.hash}`]
+        const receipt = await resp.wait(1)
+        log("create receipt: ", receipt)
+        return [`did:eth:${receipt.blockNumber}-${sendingAddress}-${resp.hash}`]
     }
 
     async messageAsset(did: string, trans: Transition) {
