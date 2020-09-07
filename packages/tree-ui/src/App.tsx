@@ -9,22 +9,26 @@ const aliceKeys = {
 }
 
 const policyStr = `
-const { setData } = global.getTree();
-async function run() {
-    const transition = global.getTransition();
-    switch (transition.type) {
-        case -1:
-            return true;
-        case 2:
-            for (let key of Object.keys(transition.metadata)) {
-                await setData(key, transition.metadata[key]);
-            }
-            return true;
-        default:
-            throw new Error("unknown type: " + transition.type);
+var TransitionTypes;
+(function (TransitionTypes) {
+    TransitionTypes[TransitionTypes["GENESIS"] = -1] = "GENESIS";
+    TransitionTypes[TransitionTypes["SEND_TOKEN"] = 0] = "SEND_TOKEN";
+    TransitionTypes[TransitionTypes["RECEIVE_TOKEN"] = 1] = "RECEIVE_TOKEN";
+    TransitionTypes[TransitionTypes["SET_DATA"] = 2] = "SET_DATA";
+    TransitionTypes[TransitionTypes["MINT_TOKEN"] = 3] = "MINT_TOKEN";
+})(TransitionTypes || (TransitionTypes = {}));
+const exp = {
+    [TransitionTypes.GENESIS]: async () => {
+        return true;
+    },
+    [TransitionTypes.SET_DATA]: async (tree, transition) => {
+        for (let key of Object.keys(transition.metadata)) {
+            tree.setData(key, transition.metadata[key]);
+        }
+        return true;
     }
-}
-run();
+};
+module.exports = exp;
 `
 
 async function run() {
