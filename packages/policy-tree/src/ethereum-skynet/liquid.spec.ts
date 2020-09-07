@@ -5,10 +5,9 @@ import { openedMemoryRepo } from '../repo'
 import { makeBlock } from '../repo/block'
 import fs from 'fs'
 import Repo from '../repo/repo'
-import { TransitionTypes } from '../transitionset'
 import { canonicalTokenName } from '../policytree/policytreeversion'
 import HeavenTokenJSON from './HeavenToken.json'
-import { Contract, providers, EventFilter, utils, BigNumber } from 'ethers'
+import { Contract, providers } from 'ethers'
 
 const liquidContract = fs.readFileSync('../policy-tree-policies/lib/liquid.js').toString()
 const ethStandardContract = fs.readFileSync('../policy-tree-policies/lib/ethstandard.js').toString()
@@ -59,7 +58,6 @@ describe('liquid', ()=> {
 
         const after = await eth.getAsset(did)
         const cur = await after.current()
-        expect(cur.getBalance(canonicalTokenName(did, 'mana')).toNumber()).to.equal(999)
-        
+        expect(cur.getBalance(canonicalTokenName(did, 'mana')).toNumber()).to.equal(999)        
     })
 })
