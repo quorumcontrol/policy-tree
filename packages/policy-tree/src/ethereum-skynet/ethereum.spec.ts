@@ -9,6 +9,7 @@ import { TransitionTypes } from '../transitionset'
 import BigNumber from 'bignumber.js'
 import { canonicalTokenName } from '../policytree/policytreeversion'
 import { providers } from 'ethers'
+import PolicyTreeTransitionContract from './PolicyTreeTransitions.json'
 
 const setDataContract = fs.readFileSync('../policy-tree-policies/lib/demo/setdata.js').toString()
 const ethHelloWorldContract = fs.readFileSync('../policy-tree-policies/lib/demo/ethhelloworld.js').toString()
@@ -23,7 +24,8 @@ describe('ethereum', ()=> {
         repo = await openedMemoryRepo('ethereum')
         const provider = new providers.JsonRpcProvider()
         const signer = provider.getSigner()
-        eth = new EthereumBack(repo, provider, signer)
+        const contractAddress = PolicyTreeTransitionContract.networks['33343733366'].address
+        eth = new EthereumBack({repo, provider, signer, contractAddress})
     })
 
     afterEach(async () => {

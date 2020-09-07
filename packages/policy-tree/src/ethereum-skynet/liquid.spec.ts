@@ -9,6 +9,7 @@ import { canonicalTokenName } from '../policytree/policytreeversion'
 import HeavenTokenJSON from './HeavenToken.json'
 import { Contract, providers, utils, BigNumber } from 'ethers'
 import { TransitionTypes } from '../transitionset'
+import PolicyTreeTransitionContract from './PolicyTreeTransitions.json'
 
 const liquidContract = fs.readFileSync('../policy-tree-policies/lib/liquid.js').toString()
 const ethStandardContract = fs.readFileSync('../policy-tree-policies/lib/ethstandard.js').toString()
@@ -23,7 +24,8 @@ describe('liquid', ()=> {
         repo = await openedMemoryRepo('liquid')
         const provider = new providers.JsonRpcProvider()
         const signer = provider.getSigner()
-        eth = new EthereumBack(repo, provider, signer)
+        const contractAddress = PolicyTreeTransitionContract.networks['33343733366'].address
+        eth = new EthereumBack({repo, provider, signer, contractAddress})
         heavenToken = new Contract(HeavenTokenJSON.networks['33343733366'].address, HeavenTokenJSON.abi, signer)
     })
 

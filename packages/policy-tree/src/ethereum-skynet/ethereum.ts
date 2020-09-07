@@ -22,6 +22,13 @@ export interface EthereumUniverse {
     getAsset: (did: string) => Promise<ReadOnlyPolicyTreeVersion>
 }
 
+interface EthereumBackOpts {
+    repo: Repo
+    provider: providers.Provider
+    signer: Signer
+    contractAddress: string
+}
+
 export class EthereumBack {
     repo: Repo
     baseUniverse: EthereumUniverse
@@ -29,7 +36,7 @@ export class EthereumBack {
     provider: providers.Provider
     signer: Signer
 
-    constructor(repo: Repo, provider: providers.Provider, signer: Signer) {
+    constructor({repo, provider, signer, contractAddress}:EthereumBackOpts) {
         this.repo = repo
         this.baseUniverse = {
             getBlock: provider.getBlock.bind(provider),
@@ -45,7 +52,7 @@ export class EthereumBack {
         }
         this.provider = provider
         this.signer = signer
-        this.contract = new Contract(PolicyTreeTransitionContract.networks['33343733366'].address, PolicyTreeTransitionContract.abi, signer)
+        this.contract = new Contract(contractAddress, PolicyTreeTransitionContract.abi, signer)
     }
 
     async createAsset(genesis: GenesisOptions): Promise<[string]> {
