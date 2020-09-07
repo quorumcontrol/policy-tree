@@ -52,6 +52,7 @@ export class PolicyTreeVersion {
     }
 
     mint(tokenName: string, amount: BigNumber) {
+        log("Mint Token: ", tokenName, " amount: ", amount)
         const key = canonicalTokenName(this.did, tokenName)
         const currentBalance = this.getBalance(key)
         this.setValue(key, currentBalance.add(amount).toString())

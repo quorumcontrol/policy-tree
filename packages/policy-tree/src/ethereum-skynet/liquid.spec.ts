@@ -7,7 +7,8 @@ import fs from 'fs'
 import Repo from '../repo/repo'
 import { canonicalTokenName } from '../policytree/policytreeversion'
 import HeavenTokenJSON from './HeavenToken.json'
-import { Contract, providers } from 'ethers'
+import { Contract, providers, utils, BigNumber } from 'ethers'
+import { TransitionTypes } from '../transitionset'
 
 const liquidContract = fs.readFileSync('../policy-tree-policies/lib/liquid.js').toString()
 const ethStandardContract = fs.readFileSync('../policy-tree-policies/lib/ethstandard.js').toString()
@@ -32,23 +33,21 @@ describe('liquid', ()=> {
         await repo.blocks.put(standardContract)
 
         const eth = new EthereumBack(repo)
-        const bob = provider.getSigner(1)
+        // const bob = provider.getSigner(1)
 
         const [did,] = await eth.createAsset({ 
             policy: liquidContractBlock.cid,
             metadata: {
-                erc20ContractAddress: heavenToken.address,
-                destinationAddress: await bob.getAddress(),
-                token: 'mana',
+                contractAddress: heavenToken.address,
             }
         })
         const [bobDid,] = await eth.createAsset({ 
             policy: standardContract.cid,
         })
 
-        const resp:providers.TransactionReceipt = await heavenToken.safeTransferFrom(await signer.getAddress(), await bob.getAddress(), 0, 1, '0x')
-
-        eth.transitionAsset(did, {
+        const resp:providers.TransactionResponse = await heavenToken.elevateEth(utils.id(bobDid), {value: 1000})
+        
+        await eth.transitionAsset(did, {
             type: 4,
             metadata: {
                 block: resp.blockNumber,
@@ -56,8 +55,20 @@ describe('liquid', ()=> {
             }
         })
 
-        const after = await eth.getAsset(did)
-        const cur = await after.current()
-        expect(cur.getBalance(canonicalTokenName(did, 'mana')).toNumber()).to.equal(999)        
+        await eth.transitionAsset(bobDid, {
+            type: TransitionTypes.RECEIVE_TOKEN,
+            metadata: {
+                token: canonicalTokenName(did, 'heth'),
+                amount: BigNumber.from(1000).toString(),
+                from: did,
+                nonce: resp.hash,
+            },
+        })
+
+        const bobAfter = await (await eth.getAsset(bobDid)).current()
+        const contractAfter = await (await eth.getAsset(did)).current()
+
+        expect(contractAfter.getBalance(canonicalTokenName(did, 'heth')).toNumber()).to.equal(0)        
+        expect(bobAfter.getBalance(canonicalTokenName(did, 'heth')).toNumber()).to.equal(1000)        
     })
 })

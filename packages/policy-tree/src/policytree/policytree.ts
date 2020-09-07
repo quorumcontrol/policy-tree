@@ -45,7 +45,7 @@ export class PolicyTree {
         opts.repo.blocks.put(genesisBlock)
         const tree = new PolicyTree(opts)
         await tree.setMeta(GENESIS_KEY, genesis)
-        for (let key of Object.keys(genesis.metadata)) {
+        for (let key of Object.keys((genesis.metadata || {}))) {
             await tree.setMeta(key, genesis.metadata[key])
         }
 

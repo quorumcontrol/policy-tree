@@ -44,6 +44,7 @@ const exp: HandlerExport<EthereumUniverse> = {
         if (!(await assertOwner(tree, transition))) {
             return false
         }
+        log("RECEIVE_TOKEN: ", tree.did, " nonce: ", transition.metadata.nonce)
         const metadata = transition.metadata
         const otherTree = await getAsset(metadata.from)
         return tree.receiveToken(metadata.token, metadata.nonce, otherTree)

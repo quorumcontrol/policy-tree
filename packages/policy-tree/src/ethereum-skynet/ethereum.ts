@@ -16,13 +16,14 @@ export const signer = provider.getSigner()
 export const contract = new Contract(PolicyTreeTransitionContract.networks['33343733366'].address, PolicyTreeTransitionContract.abi, signer)
 
 export interface EthereumUniverse {
-    getBlock: typeof provider.getBlock,
+    getBlock: typeof provider.getBlock
     utils: {
-        id: typeof utils.id,
-        hexZeroPad: typeof utils.hexZeroPad,
+        id: typeof utils.id
+        hexZeroPad: typeof utils.hexZeroPad
+        decodeAbi: utils.AbiCoder['decode']
     },
-    getLogs: typeof provider.getLogs,
-    getAsset: (did: string) => Promise<ReadOnlyPolicyTreeVersion>,
+    getLogs: typeof provider.getLogs
+    getAsset: (did: string) => Promise<ReadOnlyPolicyTreeVersion>
 }
 
 export class EthereumBack {
@@ -35,6 +36,7 @@ export class EthereumBack {
             utils: harden({
                 id: utils.id.bind(utils),
                 hexZeroPad: utils.hexZeroPad.bind(utils),
+                decodeAbi: utils.defaultAbiCoder.decode.bind(utils.defaultAbiCoder),
             }),
             getLogs: provider.getLogs.bind(provider),
             getAsset: async (did: string) => {

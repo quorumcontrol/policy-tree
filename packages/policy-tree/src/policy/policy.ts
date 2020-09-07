@@ -3,6 +3,9 @@ import { IBlock, decodeBlock, makeBlock } from '../repo/block'
 import { Transition } from '../transitionset'
 import { BigNumber } from 'ethers'
 import { PolicyTreeVersion, ReadOnlyPolicyTreeVersion } from '../policytree'
+import debug from 'debug'
+
+const policyLogger = debug('Policy')
 
 export interface TreeWriterEndowment {
     setData: PolicyTreeVersion['setData']
@@ -13,7 +16,7 @@ export interface TreeWriterEndowment {
 
 export interface StandardEndowments {
     BigNumber: typeof BigNumber
-    log: typeof console.log
+    log: typeof policyLogger
 }
 
 export type TransitionTree = (TreeWriterEndowment & ReadOnlyPolicyTreeVersion)
@@ -36,7 +39,10 @@ export class Policy<UniverseType = any> {
         this.original = code
         this.sandbox = new Sandbox(code) // TODO: opts?
         this.namespace = this.sandbox.namespace({
-            log: harden(console.log),
+            log: harden((...args:any)=> { 
+                const [arg1,...rest] = args
+                policyLogger(arg1, ...rest) 
+            }),
             BigNumber: harden(BigNumber),
         })
     }

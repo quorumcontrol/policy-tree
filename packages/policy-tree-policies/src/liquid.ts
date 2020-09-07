@@ -7,7 +7,7 @@ enum TransitionTypes {
     RECEIVE_TOKEN = 1,
     SET_DATA = 2,
     MINT_TOKEN = 3,
-    NOTICE_ETH = 4,
+    NOTICE_ELEVATION = 4,
 }
 
 // const assertOwner = async (tree: TransitionTree, trans: Transition) => {
@@ -64,36 +64,30 @@ const exp: HandlerExport<EthereumUniverse> = {
     //     const metadata = transition.metadata
     //     return tree.mintToken(metadata.token, BigNumber.from(metadata.amount))
     // },
-    [TransitionTypes.NOTICE_ETH]: async (tree, transition, {getLogs, utils}) => {
-        const contractAddr = await tree.getMeta("erc20ContractAddress")
-        const destinationAddr = await tree.getMeta("destinationAddress")
-        const token = canonicalTokenName(tree.did, await tree.getMeta("token"))
+    [TransitionTypes.NOTICE_ELEVATION]: async (tree, transition, {getLogs, utils}) => {
+        const contractAddr = await tree.getMeta("contractAddress")
+        const token = canonicalTokenName(tree.did, "heth")
         const filter:Filter = {
             address: contractAddr,
             topics: [
-                utils.id("TransferSingle(address,address,address,uint256,uint256)"),
-                null,
-                utils.hexZeroPad(transition.sender, 32),
-                utils.hexZeroPad(destinationAddr, 32)
+                utils.id("Elevate(bytes32,address,uint256)"),
+                utils.id(transition.metadata.dest)
             ],
             fromBlock: transition.metadata.block,
             toBlock: transition.metadata.block,
         }
-        // const filter:Filter = {
-        //     address: contractAddr,
-        //     topics: [
-        //         utils.id("Transfer(address,address,uint256)"),
-        //         transition.sender,
-        //         destinationAddr,
-        //     ],
-        //     fromBlock: transition.metadata.block,
-        //     toBlock: transition.metadata.block,
-        // }
         const destinationLogs = await getLogs(filter)
-        for (let transfer of destinationLogs) {
+        for (let elevation of destinationLogs) {
             // TODO: send more than 1 token basedon value
-            log("transfer: ", transfer)
-            tree.sendToken(token, transition.metadata.dest, BigNumber.from(1), transfer.transactionHash)
+            log("elevation: ", elevation)
+            const p = await tree.getPayment(token, elevation.transactionHash)
+            if (p) {
+                continue
+            }
+            const amount = utils.decodeAbi(["address","uint256"], elevation.data)[1]
+            log("minting: ", token, amount, ' nonce: ', elevation.transactionHash)
+            tree.mintToken("heth", amount)
+            tree.sendToken(token, transition.metadata.dest, amount, elevation.transactionHash)
         }
     }
 }

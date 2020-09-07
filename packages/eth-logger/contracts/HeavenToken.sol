@@ -7,7 +7,7 @@ contract HeavenToken is ERC1155Burnable, PullPayment {
     mapping(bytes32 => bool) public offers;
 
     event OfferHandled(bytes32 indexed offer, address indexed to, uint256 amount);
-    event Elevate(address from, uint256 amount, bytes32 destination);
+    event Elevate(bytes32 indexed destination, address from, uint256 amount);
 
     uint256 public constant FWEI = 0;
     uint256 public constant MANA = 1;
@@ -21,7 +21,7 @@ contract HeavenToken is ERC1155Burnable, PullPayment {
 
     function elevate(uint256 amount, bytes32 destination) public {
         _burn(msg.sender, MANA, amount);
-        emit Elevate(msg.sender, amount, destination);
+        emit Elevate(destination, msg.sender, amount);
     }
 
     function convertFWEIToEth(uint256 amount) public {
