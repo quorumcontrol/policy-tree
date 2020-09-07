@@ -4,8 +4,7 @@ const log = require('debug')('heaventest')
 
 const HeavenToken = contract.fromArtifact('HeavenToken');
 
-const FWEI = 0;
-const MANA = 1;
+const HWEI = 0;
 
 describe('HeavenToken', function() {
     const [owner, alice, bob] = accounts;
@@ -19,10 +18,9 @@ describe('HeavenToken', function() {
         const hsh = web3.utils.keccak256("test")
 
         await this.heavenToken.deposit({ from: alice, value: val })
-        await this.heavenToken.convertFWEIToMana(val, { from: alice })
-        expect((await this.heavenToken.balanceOf(alice, MANA)).toString()).to.equal(val.toString())
+        expect((await this.heavenToken.balanceOf(alice, HWEI)).toString()).to.equal(val.toString())
         const resp = await this.heavenToken.elevate(val, hsh, { from: alice })
-        expect((await this.heavenToken.balanceOf(alice, MANA)).toString()).to.equal("0")
+        expect((await this.heavenToken.balanceOf(alice, HWEI)).toString()).to.equal("0")
         console.log("resp: ", resp)
         expect(resp.logs[1].event).to.equal('Elevate')
         expect(resp.logs[1].args.from).to.equal(alice)
@@ -62,7 +60,7 @@ describe('HeavenToken', function() {
         })
     })
 
-    describe('fwei handling', () => {
+    describe('hwei handling', () => {
         let depAmount
 
         beforeEach(async function() {
@@ -70,17 +68,17 @@ describe('HeavenToken', function() {
             await this.heavenToken.deposit({ from: alice, value: depAmount })
         })
 
-        it('accepts eth and creates FWEI', async function() {
-            expect((await this.heavenToken.balanceOf(alice, FWEI)).toString()).to.equal(depAmount)
+        it('accepts eth and creates HWEI', async function() {
+            expect((await this.heavenToken.balanceOf(alice, HWEI)).toString()).to.equal(depAmount)
         })
 
         it('allows withdrawl', async function() {
-            await this.heavenToken.convertFWEIToEth(depAmount, { from: alice })
+            await this.heavenToken.convertHWEIToEth(depAmount, { from: alice })
 
             const initial = new web3.utils.BN(await web3.eth.getBalance(alice))
 
             await this.heavenToken.withdrawPayments(alice, { from: alice })
-            expect((await this.heavenToken.balanceOf(alice, FWEI)).toNumber()).to.equal(0)
+            expect((await this.heavenToken.balanceOf(alice, HWEI)).toNumber()).to.equal(0)
 
             const after = new web3.utils.BN(await web3.eth.getBalance(alice))
             expect(parseFloat(web3.utils.fromWei(after.sub(initial)))).to.closeTo(parseFloat(web3.utils.fromWei(depAmount)), 0.002)

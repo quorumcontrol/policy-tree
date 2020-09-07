@@ -66,7 +66,7 @@ const exp: HandlerExport<EthereumUniverse> = {
     // },
     [TransitionTypes.NOTICE_ELEVATION]: async (tree, transition, {getLogs, utils}) => {
         const contractAddr = await tree.getMeta("contractAddress")
-        const token = canonicalTokenName(tree.did, "heth")
+        const token = canonicalTokenName(tree.did, "hwei")
         const filter:Filter = {
             address: contractAddr,
             topics: [
@@ -86,7 +86,7 @@ const exp: HandlerExport<EthereumUniverse> = {
             }
             const amount = utils.decodeAbi(["address","uint256"], elevation.data)[1]
             log("minting: ", token, amount, ' nonce: ', elevation.transactionHash)
-            tree.mintToken("heth", amount)
+            tree.mintToken("hwei", amount)
             tree.sendToken(token, transition.metadata.dest, amount, elevation.transactionHash)
         }
     }

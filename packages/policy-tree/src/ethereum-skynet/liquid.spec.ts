@@ -15,7 +15,6 @@ const ethStandardContract = fs.readFileSync('../policy-tree-policies/lib/ethstan
 
 export const heavenToken = new Contract(HeavenTokenJSON.networks['33343733366'].address, HeavenTokenJSON.abi, signer)
 
-
 describe('liquid', ()=> {
     let repo: Repo
     beforeEach(async () => {
@@ -26,7 +25,7 @@ describe('liquid', ()=> {
         await repo.close()
     })
 
-    it('creates and transitions', async ()=> {
+    it('elevates eth to hwei', async ()=> {
         const liquidContractBlock = await makeBlock(liquidContract)
         const standardContract = await makeBlock(ethStandardContract)
         await repo.blocks.put(liquidContractBlock)
@@ -58,7 +57,7 @@ describe('liquid', ()=> {
         await eth.transitionAsset(bobDid, {
             type: TransitionTypes.RECEIVE_TOKEN,
             metadata: {
-                token: canonicalTokenName(did, 'heth'),
+                token: canonicalTokenName(did, 'hwei'),
                 amount: BigNumber.from(1000).toString(),
                 from: did,
                 nonce: resp.hash,
@@ -68,7 +67,7 @@ describe('liquid', ()=> {
         const bobAfter = await (await eth.getAsset(bobDid)).current()
         const contractAfter = await (await eth.getAsset(did)).current()
 
-        expect(contractAfter.getBalance(canonicalTokenName(did, 'heth')).toNumber()).to.equal(0)        
-        expect(bobAfter.getBalance(canonicalTokenName(did, 'heth')).toNumber()).to.equal(1000)        
+        expect(contractAfter.getBalance(canonicalTokenName(did, 'hwei')).toNumber()).to.equal(0)        
+        expect(bobAfter.getBalance(canonicalTokenName(did, 'hwei')).toNumber()).to.equal(1000)        
     })
 })
