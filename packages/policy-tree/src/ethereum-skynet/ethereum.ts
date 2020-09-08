@@ -78,7 +78,8 @@ export class EthereumBack {
         log("create resp: ", resp)
         const receipt = await resp.wait(1)
         log("create receipt: ", receipt)
-        return [`did:eth:${receipt.blockNumber}-${sendingAddress}-${resp.hash}`]
+        // did is the base64 encoded transaction hash
+        return [`did:eth:${Buffer.from(resp.hash.slice(2), 'hex').toString('base64')}`]
     }
 
     async messageAsset(did: string, trans: Transition) {
@@ -108,8 +109,8 @@ export class EthereumBack {
 
     async getAsset(did: string, maxBlockHeight?: number) {
         log("get asset: ", did)
-        const idParts = did.split(':')[2] // comes in the format did:eth:${resp.blockNumber}-${sendingAddress}-${resp.transactionHash}
-        const [_blockNumberStr, _sendingAddress, transHash] = idParts.split('-')
+        const transHashBase64 = did.split(':')[2] // comes in the format did:eth:${resp.blockNumber}-${resp.transactionHash}
+        const transHash = '0x' + Buffer.from(transHashBase64, 'base64').toString('hex')
         const genesisTrans = await this.provider.getTransactionReceipt(transHash)
         log("genesis tx: ", genesisTrans, " logs: ", genesisTrans.logs)
 
