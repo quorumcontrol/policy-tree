@@ -6,8 +6,8 @@ import "@openzeppelin/contracts/payment/PullPayment.sol";
 contract HeavenToken is ERC1155Burnable, PullPayment {
     mapping(bytes32 => bool) public offers;
 
-    event OfferHandled(bytes32 indexed offer, address indexed to, uint256 amount);
     event Elevate(bytes32 indexed destination, address from, uint256 amount);
+    event OfferHandled(bytes32 indexed offer, uint256 indexed amount, address to, bytes32 didHash);
 
     uint256 public constant HWEI = 0;
 
@@ -33,10 +33,11 @@ contract HeavenToken is ERC1155Burnable, PullPayment {
         elevate(msg.value, destination);
     }
 
-    function handleOffer(bytes32 offer, address to, uint256 amount) public {
-        require(!offers[offer], "the offer must not exist in the mapping");
+    function handleOffer(bytes32 offer, address to, uint256 amount, bytes32 didHash) public {
+        bytes32 offerMappingKey = keccak256(abi.encodePacked(offer, amount, to));
+        require(!offers[offerMappingKey], "the offer must not exist in the mapping");
         safeTransferFrom(msg.sender, to, HWEI, amount, "");
-        offers[offer] = true;
-        emit OfferHandled(offer, to, amount);
+        offers[offerMappingKey] = true;
+        emit OfferHandled(offer, amount, to, didHash);
     }
 }

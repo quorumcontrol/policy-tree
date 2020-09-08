@@ -1,4 +1,4 @@
-import {  HandlerExport, TransitionTree, Transition, EthereumUniverse } from 'policy-tree'
+import {  HandlerExport, EthereumUniverse,  Transition } from 'policy-tree'
 import { Filter } from 'policy-tree/node_modules/@ethersproject/providers'
 
 enum TransitionTypes {
@@ -8,7 +8,26 @@ enum TransitionTypes {
     SET_DATA = 2,
     MINT_TOKEN = 3,
     NOTICE_ELEVATION = 4,
+    DESCEND = 5,
+    NOTICE_DESCENT = 6,
 }
+
+interface DescendMeta {
+    from: string // did of sender
+    nonce: string // nonce of the sendToken
+    to: string // eth addr to send HWEI
+}
+
+interface OfferStore extends DescendMeta {
+    createdAt: number // blockNumber
+}
+
+interface NoticeDescentMeta {
+    block: number // block number
+    offer: string // the stored hash of the offer
+    pay: string // did of provider
+}
+
 
 // const assertOwner = async (tree: TransitionTree, trans: Transition) => {
 //     const { initialOwners } = await tree.getMeta("/genesis")
@@ -88,6 +107,73 @@ const exp: HandlerExport<EthereumUniverse> = {
             log("minting: ", token, amount, ' nonce: ', elevation.transactionHash)
             tree.mintToken("hwei", amount)
             tree.sendToken(token, transition.metadata.dest, amount, elevation.transactionHash)
+        }
+    },
+    [TransitionTypes.DESCEND]: async (tree, transition, {utils, getAsset})=> {
+        const meta:DescendMeta = (transition.metadata as any)
+        const id = utils.id(meta.from + meta.nonce)
+        const offerKey = `offers/${id}`
+        const existing = tree.getData(offerKey)
+        if (existing) {
+            return false
+            // only allow one descend
+        }
+
+        const token = canonicalTokenName(tree.did, "hwei")
+        const otherTree = await getAsset(meta.from)
+        const payment = otherTree.getPayment(token, meta.nonce)
+        if (!payment) {
+            return false
+        }
+        if (!tree.receiveToken(token, meta.nonce, otherTree)) {
+            return false
+        }
+        tree.setData(offerKey, {
+            ...meta,
+            createdAt: transition.height,
+            amount: payment.amount,
+        } as OfferStore)
+    },
+    [TransitionTypes.NOTICE_DESCENT]: async (tree, transition, {utils, getLogs})=> {
+        log("NOTICE_DESCENT")
+        const contractAddr = await tree.getMeta("contractAddress")
+        const token = canonicalTokenName(tree.did, "hwei")
+        const meta:NoticeDescentMeta = transition.metadata as any
+
+        const offerKey = `offers/${meta.offer}`
+        const existing = tree.getData(offerKey)
+        if (!existing) {
+            return false // offer doesn't exist
+        }
+        if (existing === true) {
+            return false // already fulfilled
+        }
+
+        const filter:Filter = {
+            address: contractAddr,
+            topics: [
+                // event OfferHandled(bytes32 indexed offer, uint256 indexed amount, address to, bytes32 didHash);
+                utils.id('OfferHandled(bytes32,uint256,address,bytes32)'),
+                meta.offer,
+                utils.hexZeroPad(BigNumber.from(existing.amount).toHexString(), 32),
+            ],
+            fromBlock: transition.metadata.block,
+            toBlock: transition.metadata.block,
+        }
+        const offerLogs = await getLogs(filter)
+        log("offerLogs: ", offerLogs)
+        const metaHsh = utils.id(meta.pay)
+        for (let offerHandledEvent of offerLogs) {
+            // TODO: send more than 1 token basedon value
+            log("offerHandled: ", offerHandledEvent)
+            const didHash = utils.decodeAbi(["address","bytes32"], offerHandledEvent.data)[1]
+            if (didHash === metaHsh) {
+                log("paying: ", meta.pay)
+                if (!tree.sendToken(token, meta.pay, BigNumber.from(existing.amount), meta.offer)) {
+                    return false
+                }
+                tree.setData(offerKey, true)
+            }
         }
     }
 }

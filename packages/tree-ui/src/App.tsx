@@ -1,13 +1,11 @@
 import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import 'antd/dist/antd.css';
 import { TransitionTypes, openedMemoryRepo, StellarBack, uploadBuffer, downloadFile, Policy, EthereumBack } from 'policy-tree'
 import { providers } from 'ethers'
+import { Button } from "antd";
+import { WalletProvider } from './components/Web3Context';
+import { MainPage } from './pages/MainPage';
 
-const aliceKeys = {
-  publicKey: 'GBE3HUH4YAWYOUU4NISEIRAUVTXCUZUBMD6FPDSOHDWGGJEJJBH22TMD',
-  privateKey: 'SBZGFEQ2HN7TLPZTD4QJLVPBYF64R532UYDF2TYX5U74QT6GI2Z6ULQM'
-}
 
 const policyStr = `
 var TransitionTypes;
@@ -32,32 +30,17 @@ const exp = {
 module.exports = exp;
 `
 
-declare const window:any
-
 async function run() {
 
-  await window.ethereum.enable()
-  const provider = new providers.Web3Provider(window.ethereum);
-  const signer = provider.getSigner();
-  const goerliAddr = '0x7090BB0f0A540E6B826e83e279d94b691F8dD708'
-  const repo = await openedMemoryRepo('ethereum')
+  // const policy = new Policy(policyStr)
+  // const blk = await policy.toBlock() 
+  // await repo.blocks.put(blk)
 
-  const eth = new EthereumBack({
-    repo,
-    provider,
-    signer,
-    contractAddress: goerliAddr,
-  })
+  // const [did,] = await eth.createAsset({
+  //   policy: blk.cid
+  // })
 
-  const policy = new Policy(policyStr)
-  const blk = await policy.toBlock() 
-  await repo.blocks.put(blk)
-
-  const [did,] = await eth.createAsset({
-    policy: blk.cid
-  })
-
-  console.log("did: ", did)
+  // console.log("did: ", did)
 
   // const policy = new Policy(policyStr)
   // const blk = await policy.toBlock()
@@ -91,20 +74,9 @@ run()
 function App() {
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+        <WalletProvider>
+          <MainPage />
+        </WalletProvider>
     </div>
   );
 }

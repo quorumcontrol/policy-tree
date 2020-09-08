@@ -33,11 +33,13 @@ describe('HeavenToken', function() {
             await this.heavenToken.deposit({ from: owner, value: 100000 })
 
             const hsh = web3.utils.keccak256("test")
-            await this.heavenToken.handleOffer(hsh, alice, 100, { from: owner })
+            const didHsh = web3.utils.keccak256("did:eth:mylpidentity")
+
+            await this.heavenToken.handleOffer(hsh, alice, 100, didHsh, { from: owner })
 
             // however using the same one fails
             try {
-                await this.heavenToken.handleOffer(hsh, alice, 100, { from: owner })
+                await this.heavenToken.handleOffer(hsh, alice, 100, didHsh, { from: owner })
                 expect(false).to.be.true("", "This shouldn't happen, the payment should not succeed")
             } catch (err) {
                 expect(err.message).to.include("the offer must not exist in the mapping")
@@ -45,14 +47,15 @@ describe('HeavenToken', function() {
             // but a different one succeeds
             const hsh2 = web3.utils.keccak256("test2")
 
-            await this.heavenToken.handleOffer(hsh2, alice, 100, { from: owner })
+            await this.heavenToken.handleOffer(hsh2, alice, 100, didHsh, { from: owner })
         });
 
         it('logs OfferHandled', async function() {
             await this.heavenToken.deposit({ from: owner, value: 100000 })
 
             const hsh = web3.utils.keccak256("test")
-            const resp = await this.heavenToken.handleOffer(hsh, alice, 100, { from: owner })
+            const didHsh = web3.utils.keccak256("did:eth:mylpidentity")
+            const resp = await this.heavenToken.handleOffer(hsh, alice, 100, didHsh, { from: owner })
 
             expect(resp.logs[1].args.offer).to.equal(hsh)
             expect(resp.logs[1].args.to).to.equal(alice)

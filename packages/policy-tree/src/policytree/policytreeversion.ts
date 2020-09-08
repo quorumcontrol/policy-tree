@@ -26,6 +26,11 @@ export interface ReadOnlyPolicyTreeVersion {
     getMeta: MetaGetter,
 }
 
+export interface StoredPayment {
+    dest: string //did
+    amount: string // BigNumber#toString()
+}
+
 type MetaGetter = (key:string)=>Promise<any>
 
 interface PolicyTreeVersionOpts {
@@ -59,8 +64,8 @@ export class PolicyTreeVersion {
         return true
     }
 
-    getPayment(canonicalTokenName: string, nonce: string) {
-        return this.getValue(`${canonicalTokenName}/sends/${nonce}`)
+    getPayment(canonicalTokenName: string, nonce: string):(StoredPayment|undefined) {
+        return this.getValue<StoredPayment|undefined>(`${canonicalTokenName}/sends/${nonce}`)
     }
 
     sendToken(canonicalTokenName: string, dest: string, amount: BigNumber, nonce: string) {
@@ -79,7 +84,7 @@ export class PolicyTreeVersion {
         const newBalance = currentBalance.sub(amount).toString()
         log("Send token updating balance to: ", newBalance)
         this.setValue(canonicalTokenName, newBalance)
-        this.setValue(paymentKey, { dest, amount: amount.toString() })
+        this.setValue<StoredPayment>(paymentKey, { dest, amount: amount.toString() })
         return true
     }
 
@@ -114,16 +119,16 @@ export class PolicyTreeVersion {
         this.state[namespacedKey(DATA_SPACE, key)] = value
     }
 
-    getData<T = any>(key: string): Promise<T> {
+    getData<T = any>(key: string): T {
         return this.state[namespacedKey(DATA_SPACE, key)]
     }
 
-    getValue(key: string): any {
+    getValue<T = any>(key: string): T {
         log('getValue', key)
         return this.state[namespacedKey(VALUE_SPACE, key)]
     }
 
-    setValue(key: string, value: any) {
+    setValue<T=any>(key: string, value: T) {
         log("setValue: ", key, value)
         this.state[namespacedKey(VALUE_SPACE, key)] = value
     }
