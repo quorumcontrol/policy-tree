@@ -1,6 +1,6 @@
 import 'mocha'
 import { expect } from 'chai'
-import { EthereumBack } from './ethereum'
+import { EthereumBack, IDENTITY_BLOOM } from './ethereum'
 import { openedMemoryRepo } from '../repo'
 import { makeBlock } from '../repo/block'
 import fs from 'fs'
@@ -53,6 +53,19 @@ describe('ethereum', ()=> {
         tree = await eth.getAsset(did)
 
         expect((await tree.current()).getData('hi')).to.equal('hi')
+    })
+
+    it('creates identity', async ()=> {
+        const block = await makeBlock(ethStandardContract)
+        await repo.blocks.put(block)
+
+        const [did,] = await eth.createAsset({ policy: block.cid }, IDENTITY_BLOOM)
+        if (!did) {
+            throw new Error("no did returned")
+        }
+
+        const identityTree = await eth.getIdentity(await eth.signer.getAddress())
+        expect(identityTree.did).to.equal(did)
     })
 
     it('supports a universe', async ()=> {

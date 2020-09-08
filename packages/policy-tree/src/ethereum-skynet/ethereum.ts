@@ -13,6 +13,8 @@ const log = debug('ethereum')
 
 const confirmationsRequired = 1
 
+export const IDENTITY_BLOOM = 'identity'
+
 export interface EthereumUniverse {
     getBlock: providers.Provider['getBlock']
     utils: {
@@ -29,6 +31,10 @@ interface EthereumBackOpts {
     provider: providers.Provider
     signer: Signer
     contractAddress: string
+}
+
+function didFromTxHash(txHash:string) {
+    return `did:eth:${Buffer.from(txHash.slice(2), 'hex').toString('base64')}`
 }
 
 export class EthereumBack {
@@ -57,7 +63,7 @@ export class EthereumBack {
         this.contract = new Contract(contractAddress, PolicyTreeTransitionContract.abi, signer)
     }
 
-    async createAsset(genesis: GenesisOptions): Promise<[string]> {
+    async createAsset(genesis: GenesisOptions, customBloom?:string): Promise<[string]> {
         const sendingAddress = await this.signer.getAddress()
         if (!genesis.initialOwners) {
             genesis.initialOwners = [sendingAddress]
@@ -72,14 +78,14 @@ export class EthereumBack {
         const siaUrl = await uploadBuffer(serialized)
         log("siaUrl: ", siaUrl)
 
-        const bloom = hshMp.cid.multihash.slice(2) // first 2 bytes are codec and length
+        const bloom = customBloom ? utils.id(customBloom) : hshMp.cid.multihash.slice(2) // first 2 bytes are codec and length
 
         const resp:providers.TransactionResponse = await this.contract.log(bloom, Buffer.from(siaUrl))
         log("create resp: ", resp)
-        const receipt = await resp.wait(1)
+        const receipt = await resp.wait(confirmationsRequired)
         log("create receipt: ", receipt)
         // did is the base64 encoded transaction hash
-        return [`did:eth:${Buffer.from(resp.hash.slice(2), 'hex').toString('base64')}`]
+        return [didFromTxHash(resp.hash)]
     }
 
     async messageAsset(did: string, trans: Transition) {
@@ -105,6 +111,17 @@ export class EthereumBack {
     private getEventsFor(did: string, height: number, max?: number) {
         const filter = this.contract.filters.Transition(null, utils.id(did))
         return this.contract.queryFilter(filter, height, max)
+    }
+    
+    async getIdentity(addr:string) {
+        const filter = this.contract.filters.Transition(addr, utils.id(IDENTITY_BLOOM))
+        const evts = await this.contract.queryFilter(filter)
+        const firstLog = evts[0]
+        if (!firstLog) {
+            return undefined
+        }
+        const tr = await firstLog.getTransaction()
+        return this.getAsset(didFromTxHash(tr.hash))
     }
 
     async getAsset(did: string, maxBlockHeight?: number) {
