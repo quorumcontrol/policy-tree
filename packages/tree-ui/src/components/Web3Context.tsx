@@ -1,8 +1,13 @@
 import React, { useState } from 'react'
-import { EthereumBack, openedMemoryRepo } from 'policy-tree';
-import { providers, Signer } from 'ethers';
-import { connected } from 'process';
+import { EthereumBack, openedMemoryRepo, PolicyTree, } from 'policy-tree'
+import ethers, { providers, Signer } from 'ethers'
+import {stdContract} from './stdContract'
+import { makeBlock } from 'policy-tree/lib/repo/block'
+import CID from 'cids'
+
 declare const window:any
+
+window.ethers = ethers
 
 interface WalletContextData {
     eth?: EthereumBack
@@ -11,14 +16,14 @@ interface WalletContextData {
     signer?: Signer
     connect?: ()=>Promise<void>
     loading?: boolean
+    identity?: PolicyTree
     connected: boolean
+    stdContractCID?: CID
 }
 
 export const WalletContext = React.createContext<WalletContextData>({
     connected: false,
 })
-
-
 
 export const WalletProvider:React.FC = ({children})=> {
 
@@ -26,10 +31,13 @@ export const WalletProvider:React.FC = ({children})=> {
         setCtx((s)=> {return {...s, loading: true}})
         await window.ethereum.enable()
         const provider = new providers.Web3Provider(window.ethereum);
+        window.provider = provider
         const signer = provider.getSigner();
-        const goerliAddr = '0x7090BB0f0A540E6B826e83e279d94b691F8dD708'
+        const goerliAddr = '0x8f0D349c9DF04cAaBeDE0e55c2b52a74faF3BC41'
         const repo = await openedMemoryRepo('ethereum')
-      
+        const policyBlk = await makeBlock(stdContract)
+        await repo.blocks.put(policyBlk)
+
         const eth = new EthereumBack({
           repo,
           provider,
@@ -38,6 +46,10 @@ export const WalletProvider:React.FC = ({children})=> {
         })
 
         const addr = await signer.getAddress()
+
+        const id = await eth.getIdentity(addr)
+        console.log("id", id)
+
         setCtx((exist)=> {
             return {
                 ...exist,
@@ -45,8 +57,10 @@ export const WalletProvider:React.FC = ({children})=> {
                 signer,
                 eth,
                 addr,
+                identity: id,
                 loading: false,
                 connected: true,
+                stdContractCID: policyBlk.cid,
             }
         })
     }

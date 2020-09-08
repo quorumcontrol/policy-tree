@@ -64,6 +64,7 @@ export class EthereumBack {
     }
 
     async createAsset(genesis: GenesisOptions, customBloom?:string): Promise<[string]> {
+        log("createAsst")
         const sendingAddress = await this.signer.getAddress()
         if (!genesis.initialOwners) {
             genesis.initialOwners = [sendingAddress]
