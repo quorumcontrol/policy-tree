@@ -113,8 +113,7 @@ export class EthereumBack {
         const transHash = '0x' + Buffer.from(transHashBase64, 'base64').toString('hex')
         const genesisTrans = await this.provider.getTransactionReceipt(transHash)
         log("genesis tx: ", genesisTrans, " logs: ", genesisTrans.logs)
-
-        log("genesis: ", genesisTrans)
+        
         if (!genesisTrans) {
             throw new Error("Not Found: " + genesisTrans)
         }
