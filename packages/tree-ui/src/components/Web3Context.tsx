@@ -33,7 +33,8 @@ export const WalletProvider:React.FC = ({children})=> {
         const provider = new providers.Web3Provider(window.ethereum);
         window.provider = provider
         const signer = provider.getSigner();
-        const goerliAddr = '0x8f0D349c9DF04cAaBeDE0e55c2b52a74faF3BC41'
+        const goerliLogAddr = '0x8f0D349c9DF04cAaBeDE0e55c2b52a74faF3BC41'
+        // const goerliHeavenToken = '0xef0CC310D81b6053309D69fc220360A0EF941D17'
         const repo = await openedMemoryRepo('ethereum')
         const policyBlk = await makeBlock(stdContract)
         await repo.blocks.put(policyBlk)
@@ -42,7 +43,7 @@ export const WalletProvider:React.FC = ({children})=> {
           repo,
           provider,
           signer,
-          contractAddress: goerliAddr,
+          contractAddress: goerliLogAddr,
         })
 
         const addr = await signer.getAddress()
