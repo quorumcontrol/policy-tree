@@ -11,36 +11,7 @@ import { providers, utils, BigNumber, Contract } from 'ethers'
 import PolicyTreeTransitionContract from './PolicyTreeTransitions.json'
 import HeavenTokenJSON from './HeavenToken.json'
 import CID from 'cids'
-
-const contractData = {
-    setData: fs.readFileSync('../policy-tree-policies/lib/demo/setdata.js').toString(),
-    ethHelloWorld: fs.readFileSync('../policy-tree-policies/lib/demo/ethhelloworld.js').toString(),
-    ethStandard: fs.readFileSync('../policy-tree-policies/lib/ethstandard.js').toString(),
-    ethWriteOther: fs.readFileSync('../policy-tree-policies/lib/demo/ethwriteother.js').toString(),
-    liquid: fs.readFileSync('../policy-tree-policies/lib/liquid.min.js').toString(),
-}
-
-async function deployContracts(eth: EthereumBack) {
-    const keys = Object.keys(contractData)
-    const deployed = await Promise.all(keys.map((key) => {
-        return new Promise<PolicyCIDAndLocator>(async (resolve) => {
-            const contractBlock = await makeBlock(Reflect.get(contractData, key))
-            const [did] = await eth.createAsset({
-                metadata: {
-                    policy: contractBlock.data,
-                }
-            })
-            resolve({
-                policy: contractBlock.cid,
-                policyLocator: did
-            })
-        })
-    }))
-    return keys.reduce((memo, key, i) => {
-        memo[key] = deployed[i]
-        return memo
-    }, {} as { [key: string]: PolicyCIDAndLocator })
-}
+import PolicyFile from '../../../policy-tree-policies/lib/policies.json'
 
 interface PolicyCIDAndLocator { 
     policy: CID
@@ -53,14 +24,13 @@ describe('ethereum', () => {
     let contracts: { [key: string]: PolicyCIDAndLocator }
 
     before(async () => {
-        const contractRepo = await openedMemoryRepo('preEthereum')
-        const provider = new providers.JsonRpcProvider()
-        const signer = provider.getSigner()
-        const contractAddress = PolicyTreeTransitionContract.networks['33343733366'].address
-        const cEth = new EthereumBack({ repo: contractRepo, provider, signer, contractAddress })
-
-        contracts = await deployContracts(cEth)
-        contractRepo.close()
+        contracts = Object.keys(PolicyFile).reduce((mem, key)=> {
+            mem[key] = {
+                ...(PolicyFile as any)[key],
+                policy: new CID((PolicyFile as any)[key].policy),
+            }
+            return mem
+        }, {} as { [key: string]: PolicyCIDAndLocator })
     })
 
     beforeEach(async () => {
