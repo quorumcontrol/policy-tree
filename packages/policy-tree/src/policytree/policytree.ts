@@ -18,6 +18,7 @@ export const notAllowedErr = "TRANSACTION_NOT_ALLOWED"
 
 export interface GenesisOptions {
     policy?: CID
+    policyLocator?: string // DID or sia url
     initialOwners?: string[]
     metadata?: { [key: string]: any }
 }

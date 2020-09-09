@@ -4,9 +4,9 @@ import debug from 'debug'
 import Repo from '../repo/repo'
 import { GenesisOptions, PolicyTree, GENESIS_KEY } from '../policytree/policytree'
 import { HashMap, serialize, deserialize } from '../hashmap'
-import { uploadBuffer, downloadFile } from '../skynet/skynet'
+// import { uploadBuffer, downloadFile } from '../skynet/skynet'
 import { Transition, TransitionSet, serializableTransition, transFromSerializeableTransition, SerializableTransition } from '../transitionset'
-import { makeBlock, decodeBits } from '../repo/block'
+import { makeBlock, decodeBits, decodeBlock, blockFromBits } from '../repo/block'
 import { ReadOnlyPolicyTreeVersion } from '../policytree'
 
 const log = debug('ethereum')
@@ -34,7 +34,12 @@ interface EthereumBackOpts {
 }
 
 function didFromTxHash(txHash:string) {
-    return `did:eth:${Buffer.from(txHash.slice(2), 'hex').toString('base64')}`
+    return `did:eth:${utils.base58.encode(Buffer.from(txHash.slice(2), 'hex'))}`
+}
+
+interface CreateAssetOpts {
+    customBloom?: string
+    useSia?: boolean
 }
 
 export class EthereumBack {
@@ -63,33 +68,37 @@ export class EthereumBack {
         this.contract = new Contract(contractAddress, PolicyTreeTransitionContract.abi, signer)
     }
 
-    async createAsset(genesis: GenesisOptions, customBloom?:string): Promise<[string]> {
+    async createAsset(genesis: GenesisOptions, customBloom?:string): Promise<[string, providers.TransactionReceipt, providers.TransactionResponse]> {
         log("createAsst")
         const sendingAddress = await this.signer.getAddress()
         if (!genesis.initialOwners) {
             genesis.initialOwners = [sendingAddress]
         }
 
-        const hshMp = await HashMap.create(this.repo.blocks)
-        await hshMp.set('genesis', genesis)
+        // const hshMp = await HashMap.create(this.repo.blocks)
+        // await hshMp.set('genesis', genesis)
 
-        const serialized = await serialize(hshMp, this.repo.blocks)
+        // const serialized = await serialize(hshMp, this.repo.blocks)
 
-        log("serialized size: ", serialized.byteLength)
-        const siaUrl = await uploadBuffer(serialized)
-        log("siaUrl: ", siaUrl)
+        // log("serialized size: ", serialized.byteLength)
+        // const siaUrl = await uploadBuffer(serialized)
+        // log("siaUrl: ", siaUrl)
 
-        const bloom = customBloom ? utils.id(customBloom) : hshMp.cid.multihash.slice(2) // first 2 bytes are codec and length
+        const genesisBlock = await makeBlock(genesis)
 
-        const resp:providers.TransactionResponse = await this.contract.log(bloom, Buffer.from(siaUrl))
+        const bloom = customBloom ? utils.id(customBloom) : genesisBlock.cid.multihash.slice(2) // first 2 bytes are codec and length
+        // const bloom = customBloom ? utils.id(customBloom) : hshMp.cid.multihash.slice(2) // first 2 bytes are codec and length
+
+        log("logging to ethereum: ", bloom, genesis)
+        const resp:providers.TransactionResponse = await this.contract.log(bloom, genesisBlock.data)
         log("create resp: ", resp)
         const receipt = await resp.wait(confirmationsRequired)
         log("create receipt: ", receipt)
         // did is the base64 encoded transaction hash
-        return [didFromTxHash(resp.hash)]
+        return [didFromTxHash(resp.hash), receipt, resp]
     }
 
-    async messageAsset(did: string, trans: Transition) {
+    async messageAsset(_did: string, _trans: Transition) {
         throw new Error("unimplemented")
     }
 
@@ -117,18 +126,27 @@ export class EthereumBack {
     async getIdentity(addr:string) {
         const filter = this.contract.filters.Transition(addr, utils.id(IDENTITY_BLOOM))
         const evts = await this.contract.queryFilter(filter)
-        const firstLog = evts[0]
-        if (!firstLog) {
+        const lastLog = evts[evts.length-1]
+        if (!lastLog) {
             return undefined
         }
-        const tr = await firstLog.getTransaction()
+        const tr = await lastLog.getTransaction()
         return this.getAsset(didFromTxHash(tr.hash))
+    }
+
+    // this should optionally take URLs, sia urls, etc
+    async getPolicy(did: string, height: number) {
+        log('fetchPolicy: ', did, ' height: ', height)
+        const policyTree = await this.getAsset(did, height)
+        const policyBits = await policyTree.getMeta<Buffer>('policy')
+        log('policy fetched: ', policyBits.toString('utf8'))
+        return blockFromBits(policyBits)
     }
 
     async getAsset(did: string, maxBlockHeight?: number) {
         log("get asset: ", did)
-        const transHashBase64 = did.split(':')[2] // comes in the format did:eth:${resp.blockNumber}-${resp.transactionHash}
-        const transHash = '0x' + Buffer.from(transHashBase64, 'base64').toString('hex')
+        const transHashBase58 = did.split(':')[2] // comes in the format did:eth:${resp.blockNumber}-${resp.transactionHash}
+        const transHash = utils.hexlify(utils.base58.decode(transHashBase58))
         const genesisTrans = await this.provider.getTransactionReceipt(transHash)
         log("genesis tx: ", genesisTrans, " logs: ", genesisTrans.logs)
         
@@ -145,8 +163,12 @@ export class EthereumBack {
                 return tree
             }
         } else {
-            const mp = await this.genesisToHashMap(genesisTrans)
-            const genesis = await mp.get('genesis')
+            const genesis = await this.receiptToGenesis(genesisTrans)
+            if (genesis.policy && !(await this.repo.blocks.has(genesis.policy))) {
+                const policyBlock = await this.getPolicy(genesis.policyLocator, genesisTrans.blockNumber)
+                await this.repo.blocks.put(policyBlock)
+            }
+            // const genesis = await mp.get('genesis')
             log("genesis: ", genesis)
 
             tree = await PolicyTree.create({ repo: this.repo, did }, genesis, this.baseUniverse)
@@ -168,12 +190,18 @@ export class EthereumBack {
         return transFromSerializeableTransition(serializedTrans)
     }
 
-    private async genesisToHashMap(trans: providers.TransactionReceipt): Promise<HashMap | null> {
-        const transition = this.contract.interface.decodeEventLog("Transition", trans.logs[0].data).transition
+    // private async genesisToHashMap(trans: providers.TransactionReceipt): Promise<HashMap | null> {
+    //     const transition = this.contract.interface.decodeEventLog("Transition", trans.logs[0].data).transition
 
-        const siaUrl: string = Buffer.from(transition.slice(2), 'hex').toString('utf-8')
-        const mpBits = await downloadFile(siaUrl)
-        return deserialize(this.repo.blocks, mpBits)
+    //     const siaUrl: string = Buffer.from(transition.slice(2), 'hex').toString('utf-8')
+    //     const mpBits = await downloadFile(siaUrl)
+    //     return deserialize(this.repo.blocks, mpBits)
+    // }
+
+    private async receiptToGenesis(trans: providers.TransactionReceipt): Promise<GenesisOptions | null> {
+        const transition = this.contract.interface.decodeEventLog("Transition", trans.logs[0].data).transition
+        const genesisBits = Buffer.from(transition.slice(2), 'hex')
+        return decodeBits(genesisBits)
     }
 
     // TODO: this will eventually also support the 32 byte bloom filter for aggregation

@@ -8,6 +8,7 @@ export interface IBlockStore {
     put(block:IBlock):Promise<any>
     get(cid:CID):Promise<IBlock>
     delete(cid:CID):Promise<any>
+    has(cid:CID):Promise<boolean>
 }
 
 export interface IKey {
