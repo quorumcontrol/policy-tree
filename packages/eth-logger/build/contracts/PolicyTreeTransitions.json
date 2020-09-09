@@ -1,10 +1,10 @@
 {
   "fileName": "PolicyTreeTransitions.sol",
   "contractName": "PolicyTreeTransitions",
-  "source": "// SPDX-License-Identifier: MIT\npragma solidity ^0.6.2;\n\ncontract PolicyTreeTransitions {\n  event Transition(address indexed from, bytes32 indexed bloom, bytes transition);\n\n  function log(bytes32 bloom, bytes memory transition) public {\n    emit Transition(msg.sender, bloom, transition);\n  }\n}\n",
+  "source": "// SPDX-License-Identifier: MIT\npragma solidity ^0.6.2;\n\ncontract PolicyTreeTransitions {\n  event Transition(address indexed from, bytes32 indexed bloom, bytes transition);\n\n  function log(bytes32 bloom, bytes memory transition) public {\n    emit Transition(msg.sender, bloom, transition);\n  }\n\n  function callDataOnly(bytes32 bloom, bytes memory) public {\n    emit Transition(msg.sender, bloom, \"\");\n  }\n\n}\n",
   "sourcePath": "contracts/PolicyTreeTransitions.sol",
-  "sourceMap": "57:238:14:-:0;;;;8:9:-1;5:2;;;30:1;27;20:12;5:2;57:238:14;;;;;;;",
-  "deployedSourceMap": "57:238:14:-:0;;;;8:9:-1;5:2;;;30:1;27;20:12;5:2;57:238:14;;;;;;;;;;;;;;;;;;;176:117;;;;;;13:2:-1;8:3;5:11;2:2;;;29:1;26;19:12;2:2;176:117:14;;;;;;;;;;;;;;;;;;;21:11:-1;8;5:28;2:2;;;46:1;43;36:12;2:2;176:117:14;;35:9:-1;28:4;12:14;8:25;5:40;2:2;;;58:1;55;48:12;2:2;176:117:14;;;;;;100:9:-1;95:1;81:12;77:20;67:8;63:35;60:50;39:11;25:12;22:29;11:107;8:2;;;131:1;128;121:12;8:2;176:117:14;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;30:3:-1;22:6;14;1:33;99:1;93:3;85:6;81:16;74:27;137:4;133:9;126:4;121:3;117:14;113:30;106:37;;169:3;161:6;157:16;147:26;;176:117:14;;;;;;;;;;;;;;;:::i;:::-;;;270:5;258:10;247:41;;;277:10;247:41;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;23:1:-1;8:100;33:3;30:1;27:10;8:100;;;99:1;94:3;90:11;84:18;80:1;75:3;71:11;64:39;52:2;49:1;45:10;40:15;;8:100;;;12:14;247:41:14;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;176:117;;:::o",
+  "sourceMap": "57:350:14:-:0;;;;8:9:-1;5:2;;;30:1;27;20:12;5:2;57:350:14;;;;;;;",
+  "deployedSourceMap": "57:350:14:-:0;;;;8:9:-1;5:2;;;30:1;27;20:12;5:2;57:350:14;;;;;;;;;;;;;;;;;;;;;;;;297:107;;;;;;13:2:-1;8:3;5:11;2:2;;;29:1;26;19:12;2:2;297:107:14;;;;;;;;;;;;;;;;;;;21:11:-1;8;5:28;2:2;;;46:1;43;36:12;2:2;297:107:14;;35:9:-1;28:4;12:14;8:25;5:40;2:2;;;58:1;55;48:12;2:2;297:107:14;;;;;;100:9:-1;95:1;81:12;77:20;67:8;63:35;60:50;39:11;25:12;22:29;11:107;8:2;;;131:1;128;121:12;8:2;297:107:14;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;30:3:-1;22:6;14;1:33;99:1;93:3;85:6;81:16;74:27;137:4;133:9;126:4;121:3;117:14;113:30;106:37;;169:3;161:6;157:16;147:26;;297:107:14;;;;;;;;;;;;;;;:::i;:::-;;176:117;;;;;;13:2:-1;8:3;5:11;2:2;;;29:1;26;19:12;2:2;176:117:14;;;;;;;;;;;;;;;;;;;21:11:-1;8;5:28;2:2;;;46:1;43;36:12;2:2;176:117:14;;35:9:-1;28:4;12:14;8:25;5:40;2:2;;;58:1;55;48:12;2:2;176:117:14;;;;;;100:9:-1;95:1;81:12;77:20;67:8;63:35;60:50;39:11;25:12;22:29;11:107;8:2;;;131:1;128;121:12;8:2;176:117:14;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;30:3:-1;22:6;14;1:33;99:1;93:3;85:6;81:16;74:27;137:4;133:9;126:4;121:3;117:14;113:30;106:37;;169:3;161:6;157:16;147:26;;176:117:14;;;;;;;;;;;;;;;:::i;:::-;;297:107;389:5;377:10;366:33;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;297:107;;:::o;176:117::-;270:5;258:10;247:41;;;277:10;247:41;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;23:1:-1;8:100;33:3;30:1;27:10;8:100;;;99:1;94:3;90:11;84:18;80:1;75:3;71:11;64:39;52:2;49:1;45:10;40:15;;8:100;;;12:14;247:41:14;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;176:117;;:::o",
   "abi": [
     {
       "anonymous": false,
@@ -40,6 +40,24 @@
         },
         {
           "internalType": "bytes",
+          "name": "",
+          "type": "bytes"
+        }
+      ],
+      "name": "callDataOnly",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "bloom",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "bytes",
           "name": "transition",
           "type": "bytes"
         }
@@ -54,10 +72,10 @@
     "absolutePath": "contracts/PolicyTreeTransitions.sol",
     "exportedSymbols": {
       "PolicyTreeTransitions": [
-        2156
+        2171
       ]
     },
-    "id": 2157,
+    "id": 2172,
     "nodeType": "SourceUnit",
     "nodes": [
       {
@@ -78,9 +96,9 @@
         "contractKind": "contract",
         "documentation": null,
         "fullyImplemented": true,
-        "id": 2156,
+        "id": 2171,
         "linearizedBaseContracts": [
-          2156
+          2171
         ],
         "name": "PolicyTreeTransitions",
         "nodeType": "ContractDefinition",
@@ -374,21 +392,221 @@
               "parameters": [],
               "src": "236:0:14"
             },
-            "scope": 2156,
+            "scope": 2171,
             "src": "176:117:14",
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "public"
+          },
+          {
+            "body": {
+              "id": 2169,
+              "nodeType": "Block",
+              "src": "355:49:14",
+              "statements": [
+                {
+                  "eventCall": {
+                    "argumentTypes": null,
+                    "arguments": [
+                      {
+                        "argumentTypes": null,
+                        "expression": {
+                          "argumentTypes": null,
+                          "id": 2163,
+                          "name": "msg",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": -15,
+                          "src": "377:3:14",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_magic_message",
+                            "typeString": "msg"
+                          }
+                        },
+                        "id": 2164,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": false,
+                        "lValueRequested": false,
+                        "memberName": "sender",
+                        "nodeType": "MemberAccess",
+                        "referencedDeclaration": null,
+                        "src": "377:10:14",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_address_payable",
+                          "typeString": "address payable"
+                        }
+                      },
+                      {
+                        "argumentTypes": null,
+                        "id": 2165,
+                        "name": "bloom",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 2157,
+                        "src": "389:5:14",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_bytes32",
+                          "typeString": "bytes32"
+                        }
+                      },
+                      {
+                        "argumentTypes": null,
+                        "hexValue": "",
+                        "id": 2166,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": true,
+                        "kind": "string",
+                        "lValueRequested": false,
+                        "nodeType": "Literal",
+                        "src": "396:2:14",
+                        "subdenomination": null,
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_stringliteral_c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+                          "typeString": "literal_string \"\""
+                        },
+                        "value": ""
+                      }
+                    ],
+                    "expression": {
+                      "argumentTypes": [
+                        {
+                          "typeIdentifier": "t_address_payable",
+                          "typeString": "address payable"
+                        },
+                        {
+                          "typeIdentifier": "t_bytes32",
+                          "typeString": "bytes32"
+                        },
+                        {
+                          "typeIdentifier": "t_stringliteral_c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+                          "typeString": "literal_string \"\""
+                        }
+                      ],
+                      "id": 2162,
+                      "name": "Transition",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 2140,
+                      "src": "366:10:14",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_function_event_nonpayable$_t_address_$_t_bytes32_$_t_bytes_memory_ptr_$returns$__$",
+                        "typeString": "function (address,bytes32,bytes memory)"
+                      }
+                    },
+                    "id": 2167,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "kind": "functionCall",
+                    "lValueRequested": false,
+                    "names": [],
+                    "nodeType": "FunctionCall",
+                    "src": "366:33:14",
+                    "tryCall": false,
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_tuple$__$",
+                      "typeString": "tuple()"
+                    }
+                  },
+                  "id": 2168,
+                  "nodeType": "EmitStatement",
+                  "src": "361:38:14"
+                }
+              ]
+            },
+            "documentation": null,
+            "functionSelector": "7b61456e",
+            "id": 2170,
+            "implemented": true,
+            "kind": "function",
+            "modifiers": [],
+            "name": "callDataOnly",
+            "nodeType": "FunctionDefinition",
+            "overrides": null,
+            "parameters": {
+              "id": 2160,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 2157,
+                  "name": "bloom",
+                  "nodeType": "VariableDeclaration",
+                  "overrides": null,
+                  "scope": 2170,
+                  "src": "319:13:14",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bytes32",
+                    "typeString": "bytes32"
+                  },
+                  "typeName": {
+                    "id": 2156,
+                    "name": "bytes32",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "319:7:14",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bytes32",
+                      "typeString": "bytes32"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 2159,
+                  "name": "",
+                  "nodeType": "VariableDeclaration",
+                  "overrides": null,
+                  "scope": 2170,
+                  "src": "334:12:14",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bytes_memory_ptr",
+                    "typeString": "bytes"
+                  },
+                  "typeName": {
+                    "id": 2158,
+                    "name": "bytes",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "334:5:14",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bytes_storage_ptr",
+                      "typeString": "bytes"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                }
+              ],
+              "src": "318:29:14"
+            },
+            "returnParameters": {
+              "id": 2161,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "355:0:14"
+            },
+            "scope": 2171,
+            "src": "297:107:14",
             "stateMutability": "nonpayable",
             "virtual": false,
             "visibility": "public"
           }
         ],
-        "scope": 2157,
-        "src": "57:238:14"
+        "scope": 2172,
+        "src": "57:350:14"
       }
     ],
-    "src": "32:264:14"
+    "src": "32:376:14"
   },
-  "bytecode": "0x608060405234801561001057600080fd5b506101e3806100206000396000f3fe608060405234801561001057600080fd5b506004361061002b5760003560e01c8063d72a266514610030575b600080fd5b6100f36004803603604081101561004657600080fd5b81019080803590602001909291908035906020019064010000000081111561006d57600080fd5b82018360208201111561007f57600080fd5b803590602001918460018302840111640100000000831117156100a157600080fd5b91908080601f016020809104026020016040519081016040528093929190818152602001838380828437600081840152601f19601f8201169050808301925050505050505091929192905050506100f5565b005b813373ffffffffffffffffffffffffffffffffffffffff167f616ca504222f7ea320ad71402990a59200b4adf3a38dc8b47ea44412c6ad68a6836040518080602001828103825283818151815260200191508051906020019080838360005b8381101561016f578082015181840152602081019050610154565b50505050905090810190601f16801561019c5780820380516001836020036101000a031916815260200191505b509250505060405180910390a3505056fea264697066735822122063ac9d92db5196dc39ed4a2f218404d70672b2a7d3287bcf21f7193565e80b6a64736f6c63430006020033",
-  "deployedBytecode": "0x608060405234801561001057600080fd5b506004361061002b5760003560e01c8063d72a266514610030575b600080fd5b6100f36004803603604081101561004657600080fd5b81019080803590602001909291908035906020019064010000000081111561006d57600080fd5b82018360208201111561007f57600080fd5b803590602001918460018302840111640100000000831117156100a157600080fd5b91908080601f016020809104026020016040519081016040528093929190818152602001838380828437600081840152601f19601f8201169050808301925050505050505091929192905050506100f5565b005b813373ffffffffffffffffffffffffffffffffffffffff167f616ca504222f7ea320ad71402990a59200b4adf3a38dc8b47ea44412c6ad68a6836040518080602001828103825283818151815260200191508051906020019080838360005b8381101561016f578082015181840152602081019050610154565b50505050905090810190601f16801561019c5780820380516001836020036101000a031916815260200191505b509250505060405180910390a3505056fea264697066735822122063ac9d92db5196dc39ed4a2f218404d70672b2a7d3287bcf21f7193565e80b6a64736f6c63430006020033",
+  "bytecode": "0x608060405234801561001057600080fd5b50610312806100206000396000f3fe608060405234801561001057600080fd5b50600436106100365760003560e01c80637b61456e1461003b578063d72a266514610100575b600080fd5b6100fe6004803603604081101561005157600080fd5b81019080803590602001909291908035906020019064010000000081111561007857600080fd5b82018360208201111561008a57600080fd5b803590602001918460018302840111640100000000831117156100ac57600080fd5b91908080601f016020809104026020016040519081016040528093929190818152602001838380828437600081840152601f19601f8201169050808301925050505050505091929192905050506101c5565b005b6101c36004803603604081101561011657600080fd5b81019080803590602001909291908035906020019064010000000081111561013d57600080fd5b82018360208201111561014f57600080fd5b8035906020019184600183028401116401000000008311171561017157600080fd5b91908080601f016020809104026020016040519081016040528093929190818152602001838380828437600081840152601f19601f820116905080830192505050505050509192919290505050610224565b005b813373ffffffffffffffffffffffffffffffffffffffff167f616ca504222f7ea320ad71402990a59200b4adf3a38dc8b47ea44412c6ad68a6604051808060200182810382526000815260200160200191505060405180910390a35050565b813373ffffffffffffffffffffffffffffffffffffffff167f616ca504222f7ea320ad71402990a59200b4adf3a38dc8b47ea44412c6ad68a6836040518080602001828103825283818151815260200191508051906020019080838360005b8381101561029e578082015181840152602081019050610283565b50505050905090810190601f1680156102cb5780820380516001836020036101000a031916815260200191505b509250505060405180910390a3505056fea2646970667358221220816743d828753c4e0bdc28d8f457e7f267ade1e343d1a44e797231bea9c3bdce64736f6c63430006020033",
+  "deployedBytecode": "0x608060405234801561001057600080fd5b50600436106100365760003560e01c80637b61456e1461003b578063d72a266514610100575b600080fd5b6100fe6004803603604081101561005157600080fd5b81019080803590602001909291908035906020019064010000000081111561007857600080fd5b82018360208201111561008a57600080fd5b803590602001918460018302840111640100000000831117156100ac57600080fd5b91908080601f016020809104026020016040519081016040528093929190818152602001838380828437600081840152601f19601f8201169050808301925050505050505091929192905050506101c5565b005b6101c36004803603604081101561011657600080fd5b81019080803590602001909291908035906020019064010000000081111561013d57600080fd5b82018360208201111561014f57600080fd5b8035906020019184600183028401116401000000008311171561017157600080fd5b91908080601f016020809104026020016040519081016040528093929190818152602001838380828437600081840152601f19601f820116905080830192505050505050509192919290505050610224565b005b813373ffffffffffffffffffffffffffffffffffffffff167f616ca504222f7ea320ad71402990a59200b4adf3a38dc8b47ea44412c6ad68a6604051808060200182810382526000815260200160200191505060405180910390a35050565b813373ffffffffffffffffffffffffffffffffffffffff167f616ca504222f7ea320ad71402990a59200b4adf3a38dc8b47ea44412c6ad68a6836040518080602001828103825283818151815260200191508051906020019080838360005b8381101561029e578082015181840152602081019050610283565b50505050905090810190601f1680156102cb5780820380516001836020036101000a031916815260200191505b509250505060405180910390a3505056fea2646970667358221220816743d828753c4e0bdc28d8f457e7f267ade1e343d1a44e797231bea9c3bdce64736f6c63430006020033",
   "compiler": {
     "name": "solc",
     "version": "0.6.2+commit.bacdbe57.Emscripten.clang",
@@ -420,8 +638,8 @@
     "33343733366": {
       "links": {},
       "events": {},
-      "address": "0x5b1869D9A4C187F2EAa108f3062412ecf0526b24",
-      "updated_at": 1599566932431
+      "address": "0x5722782B7e823cA9Db336c3364A680131F482C08",
+      "updated_at": 1599640474318
     }
   }
 }

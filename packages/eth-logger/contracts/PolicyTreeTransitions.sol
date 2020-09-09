@@ -7,4 +7,9 @@ contract PolicyTreeTransitions {
   function log(bytes32 bloom, bytes memory transition) public {
     emit Transition(msg.sender, bloom, transition);
   }
+
+  function callDataOnly(bytes32 bloom, bytes memory) public {
+    emit Transition(msg.sender, bloom, "");
+  }
+
 }
