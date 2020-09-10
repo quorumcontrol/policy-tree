@@ -24,6 +24,32 @@ describe('PolicyTreeTransitions', function() {
         expect(Buffer.from(hex.slice(2), 'hex')).to.have.lengthOf(transition.length)
     });
 
+    it('logs multiple transitions', async function() {
+        const makeLog = (i) => {
+            const characterCount = 20
+            let str = i.toString(10)
+            for (let i = 0; i < characterCount; i++) {
+                str = `${str}-${i}-`
+            }
+            const buf = Buffer.from(str)
+            return [buf.slice(0, 32), buf]
+        }
+        let logs = []
+        for (let i = 0; i < 10; i++) {
+            logs.push(makeLog(i))
+        }
+
+        const blooms = logs.map((l) => l[0])
+        const transitions = logs.map((l) => l[1])
+
+        const res = await this.policyTreeTransitionContract.logMultiple(blooms, transitions, { from: accounts[0] });
+        expect(res.logs).to.have.lengthOf(10)
+        for (let i = 0; i < 10; i++) {
+            const hex = res.logs[i].args.transition
+            expect(Buffer.from(hex.slice(2), 'hex').toString()).to.equal(transitions[i].toString())
+        }
+    })
+
     it('allows callDataOnly logging', async function() {
         const characterCount = 1024
         let str = ""
