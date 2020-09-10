@@ -1,9 +1,15 @@
 import React, { useState } from 'react'
-import { EthereumBack, openedMemoryRepo, PolicyTree, } from 'policy-tree'
-import ethers, { providers, Signer } from 'ethers'
-import {stdContract} from './stdContract'
-import { makeBlock } from 'policy-tree/lib/repo/block'
+import { EthereumBack, openedMemoryRepo, PolicyTree, IDENTITY_BLOOM, } from 'policy-tree'
+import ethers, { providers, Signer, Contract } from 'ethers'
 import CID from 'cids'
+import PolicyTreeTransitionContract from '../contracts/PolicyTreeTransitions.json'
+import heavenTokenJSON from '../contracts/HeavenToken.json'
+import { PolicyTreeVersion } from 'policy-tree/lib/policytree'
+import contracts from '../contracts/contracts'
+// import {liquid as goerliLiquid} from '../contracts/policies-goerli.json'
+import {liquidAddress} from '../contracts/contracts'
+
+const networkId = "33343733366"
 
 declare const window:any
 
@@ -14,9 +20,15 @@ interface WalletContextData {
     addr?: string
     provider?: providers.Provider
     signer?: Signer
-    connect?: ()=>Promise<void>
     loading?: boolean
     identity?: PolicyTree
+    currentIdentity?: PolicyTreeVersion
+    connect?: ()=>Promise<void>
+    createIdentity?: ()=>Promise<string>
+    refreshIdentity?: ()=>Promise<void>
+
+    heavenToken?:Contract
+    liquidDid?:string
     connected: boolean
     stdContractCID?: CID
 }
@@ -26,18 +38,20 @@ export const WalletContext = React.createContext<WalletContextData>({
 })
 
 export const WalletProvider:React.FC = ({children})=> {
+    const [ctx,setCtx] = useState<WalletContextData>({
+        connected: false,
+    })
+    window.ctx = ctx
 
     const onConnect = async ()=> {
         setCtx((s)=> {return {...s, loading: true}})
-        await window.ethereum.enable()
-        const provider = new providers.Web3Provider(window.ethereum);
+        // await window.ethereum.enable()
+        // const provider = new providers.Web3Provider(window.ethereum);
+        const provider = new providers.JsonRpcProvider();
         window.provider = provider
         const signer = provider.getSigner();
-        const goerliLogAddr = '0x8f0D349c9DF04cAaBeDE0e55c2b52a74faF3BC41'
-        // const goerliHeavenToken = '0xef0CC310D81b6053309D69fc220360A0EF941D17'
+        const goerliLogAddr = PolicyTreeTransitionContract.networks[networkId].address
         const repo = await openedMemoryRepo('ethereum')
-        const policyBlk = await makeBlock(stdContract)
-        await repo.blocks.put(policyBlk)
 
         const eth = new EthereumBack({
           repo,
@@ -46,33 +60,57 @@ export const WalletProvider:React.FC = ({children})=> {
           contractAddress: goerliLogAddr,
         })
 
+        const heavenToken = new Contract(heavenTokenJSON.networks[networkId].address, heavenTokenJSON.abi, signer)
+
         const addr = await signer.getAddress()
 
         const id = await eth.getIdentity(addr)
         console.log("id", id)
 
-        setCtx((exist)=> {
+        const current = id ? await id.current() : undefined
+
+        setCtx((s)=> {
             return {
-                ...exist,
+                ...s,
+
                 provider,
                 signer,
                 eth,
                 addr,
                 identity: id,
+                currentIdentity: current,
                 loading: false,
                 connected: true,
-                stdContractCID: policyBlk.cid,
+                heavenToken: heavenToken,
+                liquidDid: liquidAddress,
             }
         })
     }
 
-    const [ctx,setCtx] = useState<WalletContextData>({
-        connect: onConnect,
-        connected: false,
-    })
+    const refreshIdentity = async ()=> {
+        const id = await ctx.eth?.getAsset(ctx.identity?.did!)
+        const current = id ? await id.current() : undefined
+        setCtx((s)=> {{ return {...s, identity: id, currentIdentity: current}}})
+        return
+    }
+
+    const createIdentity = async ()=> {
+        setCtx((s)=> { return {...s, loading: true}})
+        const [did] = await ctx.eth!.createAsset({
+            ...contracts['ethStandard'],
+        }, IDENTITY_BLOOM)
+        const identity = await ctx.eth?.getAsset(did)
+        setCtx((s)=> { return {...s, loading: false, identity: identity}})
+        return did
+    }
 
     return (
-        <WalletContext.Provider value={ctx}>
+        <WalletContext.Provider value={{
+            ...ctx, 
+            connect: onConnect, 
+            createIdentity: createIdentity,
+            refreshIdentity: refreshIdentity,
+        }}>
             {children}
         </WalletContext.Provider>
     )

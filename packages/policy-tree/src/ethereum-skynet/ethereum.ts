@@ -102,7 +102,7 @@ export class EthereumBack {
         throw new Error("unimplemented")
     }
 
-    async transitionAsset(did: string, trans: Transition) {
+    async transitionAsset(did: string, trans: Transition):Promise<providers.TransactionResponse> {
         const blk = await makeBlock(serializableTransition(trans))
         const bloom = utils.id(did)
         return await this.contract.log(bloom, blk.data)
@@ -260,7 +260,7 @@ export class EthereumBack {
                 // we want the transitions to always produce reproducible results so always use the state of *other* assets
                 // at the previous block height to the block height of this transition
                 getAsset: async (did: string) => {
-                    log("this asset called: ", previousBlock)
+                    log("this asset called: ", did, ' block: ', previousBlock)
                     return (await (await this.getAsset(did, previousBlock)).at(previousBlock))
                 },
             })

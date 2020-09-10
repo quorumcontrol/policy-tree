@@ -6,12 +6,6 @@ import { HweiCard } from '../components/HweiCard';
 const { Header, Content, Footer } = Layout;
 
 export const MainPage: React.FC = () => {
-    const ctx = useContext(WalletContext)
-
-    if (ctx.loading) {
-        return <Spin />
-    }
-
     return (
         <Layout className="layout">
             <Header>

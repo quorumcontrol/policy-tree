@@ -84,8 +84,11 @@ const exp: HandlerExport<EthereumUniverse> = {
     //     return tree.mintToken(metadata.token, BigNumber.from(metadata.amount))
     // },
     [TransitionTypes.NOTICE_ELEVATION]: async (tree, transition, {getLogs, utils}) => {
+        log("notice elevation")
         const contractAddr = await tree.getMeta("contractAddress")
         const token = canonicalTokenName(tree.did, "hwei")
+        log("token: ", token)
+
         const filter:Filter = {
             address: contractAddr,
             topics: [
@@ -99,27 +102,33 @@ const exp: HandlerExport<EthereumUniverse> = {
         for (let elevation of destinationLogs) {
             // TODO: send more than 1 token basedon value
             log("elevation: ", elevation)
-            const p = await tree.getPayment(token, elevation.transactionHash)
+            const p = tree.getPayment(token, elevation.transactionHash)
             if (p) {
+                log("tree already has elevation")
                 continue
             }
             const amount = utils.decodeAbi(["address","uint256"], elevation.data)[1]
             log("minting: ", token, amount, ' nonce: ', elevation.transactionHash)
             tree.mintToken("hwei", amount)
+            log("sending: ", token, amount, 'to: ', transition.metadata.dest, ' nonce: ', elevation.transactionHash)
             tree.sendToken(token, transition.metadata.dest, amount, elevation.transactionHash)
         }
     },
     [TransitionTypes.DESCEND]: async (tree, transition, {utils, getAsset})=> {
+        log("descend")
         const meta:DescendMeta = (transition.metadata as any)
         const id = utils.id(meta.from + meta.nonce)
+        log("id: ", id)
         const offerKey = `offers/${id}`
         const existing = tree.getData(offerKey)
         if (existing) {
+            log("already elevated")
             return false
             // only allow one descend
         }
 
         const token = canonicalTokenName(tree.did, "hwei")
+        log("token: ", token)
         const otherTree = await getAsset(meta.from)
         const payment = otherTree.getPayment(token, meta.nonce)
         if (!payment) {

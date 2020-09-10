@@ -2,8 +2,6 @@ import 'mocha'
 import { expect } from 'chai'
 import { EthereumBack, IDENTITY_BLOOM } from './ethereum'
 import { openedMemoryRepo } from '../repo'
-import { makeBlock } from '../repo/block'
-import fs from 'fs'
 import Repo from '../repo/repo'
 import { TransitionTypes } from '../transitionset'
 import { canonicalTokenName } from '../policytree/policytreeversion'
@@ -11,7 +9,7 @@ import { providers, utils, BigNumber, Contract } from 'ethers'
 import PolicyTreeTransitionContract from './PolicyTreeTransitions.json'
 import HeavenTokenJSON from './HeavenToken.json'
 import CID from 'cids'
-import PolicyFile from '../../../policy-tree-policies/lib/policies.json'
+import {contracts as PolicyFile} from '../../../policy-tree-policies/lib/policies.json'
 
 interface PolicyCIDAndLocator { 
     policy: CID
