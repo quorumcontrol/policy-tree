@@ -7,7 +7,7 @@ import heavenTokenJSON from '../contracts/HeavenToken.json'
 import { PolicyTreeVersion } from 'policy-tree/lib/policytree'
 import contracts from '../contracts/contracts'
 
-const networkId = "33343733366"
+const networkId = "5"
 
 declare const window:any
 
@@ -31,6 +31,8 @@ interface WalletContextData {
     stdContractCID?: CID
 }
 
+window.Buffer = Buffer
+
 export const WalletContext = React.createContext<WalletContextData>({
     connected: false,
 })
@@ -43,9 +45,9 @@ export const WalletProvider:React.FC = ({children})=> {
 
     const onConnect = async ()=> {
         setCtx((s)=> {return {...s, loading: true}})
-        // await window.ethereum.enable()
-        // const provider = new providers.Web3Provider(window.ethereum);
-        const provider = new providers.JsonRpcProvider();
+        await window.ethereum.enable()
+        const provider = new providers.Web3Provider(window.ethereum);
+        // const provider = new providers.JsonRpcProvider();
         window.provider = provider
         const signer = provider.getSigner();
         const goerliLogAddr = PolicyTreeTransitionContract.networks[networkId].address

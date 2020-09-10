@@ -30,16 +30,16 @@ export const EthCard: React.FC = () => {
             throw new Error("must be connected and have identity and contract")
         }
 
-        console.log("liquid did: ", ctx.liquidDid)
+        console.log("liquid did: ", ctx.liquidDid, "amount: ", amount)
 
         const resp: providers.TransactionResponse = await ctx.heavenToken.elevateEth(utils.id(ctx.currentIdentity.did), { value: amount })
-        console.log("receipt: ", await resp.wait(1))
+        console.log("resp: ", resp, "receipt: ", await resp.wait(1))
 
         console.log("transitioning liquid: ", ctx.liquidDid)
         await (await ctx.eth.transitionAsset(ctx.liquidDid!, {
             type: 4,
             metadata: {
-                block: resp.blockNumber,
+                block: (await resp.wait()).blockNumber,
                 dest: ctx.currentIdentity.did,
             }
         })).wait(1)
