@@ -3,11 +3,12 @@ import PolicyTreeTransitionContract from './PolicyTreeTransitions.json'
 import debug from 'debug'
 import Repo from '../repo/repo'
 import { GenesisOptions, PolicyTree, GENESIS_KEY } from '../policytree/policytree'
-import { HashMap, serialize, deserialize } from '../hashmap'
+// import { HashMap, serialize, deserialize } from '../hashmap'
 // import { uploadBuffer, downloadFile } from '../skynet/skynet'
 import { Transition, TransitionSet, serializableTransition, transFromSerializeableTransition, SerializableTransition } from '../transitionset'
-import { makeBlock, decodeBits, decodeBlock, blockFromBits } from '../repo/block'
+import { makeBlock, decodeBits, blockFromBits } from '../repo/block'
 import { ReadOnlyPolicyTreeVersion } from '../policytree'
+
 
 const log = debug('ethereum')
 
@@ -33,14 +34,21 @@ interface EthereumBackOpts {
     contractAddress: string
 }
 
+interface maxHeightOpts {
+    block:number // the block number
+    index?:number // the transaction index in the block
+}
+
 function didFromTxHash(txHash:string) {
     return `did:eth:${utils.base58.encode(Buffer.from(txHash.slice(2), 'hex'))}`
 }
 
-interface CreateAssetOpts {
-    customBloom?: string
-    useSia?: boolean
-}
+// TODO: maybe something like this which lets you decide where
+// to store the transaction
+// interface CreateAssetOpts {
+//     customBloom?: string
+//     useSia?: boolean
+// }
 
 export class EthereumBack {
     repo: Repo
