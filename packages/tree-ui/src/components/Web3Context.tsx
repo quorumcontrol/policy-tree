@@ -6,8 +6,6 @@ import PolicyTreeTransitionContract from '../contracts/PolicyTreeTransitions.jso
 import heavenTokenJSON from '../contracts/HeavenToken.json'
 import { PolicyTreeVersion } from 'policy-tree/lib/policytree'
 import contracts from '../contracts/contracts'
-// import {liquid as goerliLiquid} from '../contracts/policies-goerli.json'
-import {liquidAddress} from '../contracts/contracts'
 
 const networkId = "33343733366"
 
@@ -82,7 +80,7 @@ export const WalletProvider:React.FC = ({children})=> {
                 loading: false,
                 connected: true,
                 heavenToken: heavenToken,
-                liquidDid: liquidAddress,
+                liquidDid: contracts[networkId].liquidAddress,
             }
         })
     }
@@ -97,7 +95,7 @@ export const WalletProvider:React.FC = ({children})=> {
     const createIdentity = async ()=> {
         setCtx((s)=> { return {...s, loading: true}})
         const [did] = await ctx.eth!.createAsset({
-            ...contracts['ethStandard'],
+            ...contracts[networkId].contracts['ethStandard'],
         }, IDENTITY_BLOOM)
         const identity = await ctx.eth?.getAsset(did)
         setCtx((s)=> { return {...s, loading: false, identity: identity}})

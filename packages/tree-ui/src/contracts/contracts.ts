@@ -1,5 +1,5 @@
-// import {contracts as PolicyFile} from './policies-goerli.json'
-import {contracts as PolicyFile, liquid} from './policies.json'
+import {contracts as GoerliPolicyFile, liquid as goerliLiquid} from './policies-goerli.json'
+import {contracts as LocalPolicyFile, liquid as localLiquid} from './policies.json'
 import CID from 'cids'
 
 interface PolicyCIDAndLocator { 
@@ -7,12 +7,23 @@ interface PolicyCIDAndLocator {
     policyLocator: string
 }
 
-export const liquidAddress = liquid
-
-export default Object.keys(PolicyFile).reduce((mem, key)=> {
-    mem[key] = {
-        ...(PolicyFile as any)[key],
-        policy: new CID((PolicyFile as any)[key].policy),
+export default {
+    '5': {
+        liquidAddress: goerliLiquid,
+        contracts: fileToExport(GoerliPolicyFile),
+    },
+    '33343733366': {
+        liquidAddress: localLiquid,
+        contracts: fileToExport(LocalPolicyFile),
     }
-    return mem
-}, {} as { [key: string]: PolicyCIDAndLocator })
+}
+
+function fileToExport(policyFile:any) {
+    return Object.keys(policyFile).reduce((mem, key)=> {
+        mem[key] = {
+            ...(policyFile as any)[key],
+            policy: new CID((policyFile as any)[key].policy),
+        }
+        return mem
+    }, {} as { [key: string]: PolicyCIDAndLocator })
+}

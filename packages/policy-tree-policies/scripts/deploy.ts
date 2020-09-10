@@ -71,32 +71,32 @@ async function deployLocal() {
 
 async function deployGoerli() {
     const contractRepo = await openedMemoryRepo('goerliDeployer')
-    // const web3Provider = loggerNetworks.networks.goerli.provider()
+    const web3Provider = loggerNetworks.networks.goerli.provider()
 
-    // const provider = new providers.Web3Provider(web3Provider)
-    // const signer = provider.getSigner()
+    const provider = new providers.Web3Provider(web3Provider)
+    const signer = provider.getSigner()
 
-    // const contractAddress = PolicyTreeTransitionContract.networks['5'].address
-    // const heavenToken = HeavenTokenContract.networks['5']
+    const contractAddress = PolicyTreeTransitionContract.networks['5'].address
+    const heavenToken = HeavenTokenContract.networks['5']
 
-    // const cEth = new EthereumBack({ repo: contractRepo, provider, signer, contractAddress })
+    const cEth = new EthereumBack({ repo: contractRepo, provider, signer, contractAddress })
 
-    // const contracts = await deployContracts(cEth)
+    const contracts = await deployContracts(cEth)
 
-    // const [did,] = await cEth.createAsset({
-    //     policy: new CID(contracts['liquid'].policy),
-    //     policyLocator: contracts['liquid'].policyLocator,
-    //     metadata: {
-    //         contractAddress: heavenToken.address,
-    //     }
-    // })
+    const [did,] = await cEth.createAsset({
+        policy: new CID(contracts['liquid'].policy),
+        policyLocator: contracts['liquid'].policyLocator,
+        metadata: {
+            contractAddress: heavenToken.address,
+        }
+    })
 
-    // contractRepo.close()
+    contractRepo.close()
 
-    // fs.writeFileSync('./lib/policies-goerli.json', Buffer.from(JSON.stringify({
-    //     contracts: contracts,
-    //     liquid: did,
-    // })))
+    fs.writeFileSync('./lib/policies-goerli.json', Buffer.from(JSON.stringify({
+        contracts: contracts,
+        liquid: did,
+    })))
     return contractRepo.close()
 }
 
