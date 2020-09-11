@@ -50,6 +50,50 @@ function didFromTxHash(txHash:string) {
 //     useSia?: boolean
 // }
 
+const BLOCK_NUMBER_MULTIPLIER = 1000000000000
+const TRANSACTION_INDEX_MULTIPLIER = 100000
+/**
+ * evtToHeight takes a combination of blockHeight, transaction index (within the block) and log index (index within the transaction)
+ * to produce a global 'height' of a single transition. We are assuming a maximum of approximately 10,000,000 txs per block and 100,000 logs per transaction
+ * @param evt 
+ */
+function evtToHeight(evt:Event):number {
+    return partsToHeight(evt.blockNumber, evt.transactionIndex, evt.logIndex)
+}
+
+function partsToHeight(blockNumber:number, transactionIndex:number, logIndex:number) {
+    return (blockNumber * BLOCK_NUMBER_MULTIPLIER) + (transactionIndex * TRANSACTION_INDEX_MULTIPLIER) + logIndex
+}
+
+function heightToBlockHeight(height:number) {
+    return Math.trunc(height / BLOCK_NUMBER_MULTIPLIER)
+}
+
+function heightToTransactionIndex(height:number) {
+    // first we subtract the block height
+    const transactionIndexAndLogIndex = height - (heightToBlockHeight(height) * BLOCK_NUMBER_MULTIPLIER)
+    // then we return the transaction index without the log index
+    return Math.trunc(transactionIndexAndLogIndex / TRANSACTION_INDEX_MULTIPLIER)
+}
+
+// take the big number, and get the previous log index, which could be in the previous transaction
+const MAX_TRAN = 100000000000
+const MAX_LOG = 10000
+function previousLogIndex(height:number) {
+    const block = heightToBlockHeight(height)
+    const txIndex = heightToTransactionIndex(height)
+    const logIndex = height - (block * BLOCK_NUMBER_MULTIPLIER) - (txIndex * TRANSACTION_INDEX_MULTIPLIER)
+    if (logIndex > 0) {
+        return partsToHeight(block, txIndex, logIndex - 1)
+    }
+    if (txIndex > 0) {
+        return partsToHeight(block, txIndex - 1, MAX_LOG)
+    }
+    return partsToHeight(block-1, MAX_TRAN, MAX_LOG)
+}   
+
+
+
 export class EthereumBack {
     repo: Repo
     baseUniverse: EthereumUniverse
@@ -151,7 +195,7 @@ export class EthereumBack {
         return blockFromBits(policyBits)
     }
 
-    async getAsset(did: string, maxBlockHeight?: number) {
+    async getAsset(did: string, maxHeight?: number) {
         log("get asset: ", did)
         const transHashBase58 = did.split(':')[2] // comes in the format did:eth:${resp.blockNumber}-${resp.transactionHash}
         const transHash = utils.hexlify(utils.base58.decode(transHashBase58))
@@ -164,10 +208,10 @@ export class EthereumBack {
         let tree: PolicyTree
         const localTree = await this.getLocal(did)
         if (localTree) {
-            log("local tree exists for ", did, " genesis: ", await localTree.getMeta(GENESIS_KEY))
+            log("local tree exists for ", did, " genesis: ", await localTree.getMeta(GENESIS_KEY), " height: ", await localTree.height())
             tree = localTree
-            const height = (await tree.current()).height
-            if (height >= maxBlockHeight) {
+            const height = await tree.height()
+            if (height >= maxHeight) {
                 return tree
             }
         } else {
@@ -184,11 +228,14 @@ export class EthereumBack {
 
         const height = (await tree.current()).height
 
-        return this.playTransactions(tree, did, await this.getEventsFor(
-            did,
-            height ? (height + 1) : (genesisTrans.blockNumber + 1),
-            maxBlockHeight,
-        ), maxBlockHeight)
+        const blockHeight = height ? heightToBlockHeight(height) : genesisTrans.blockNumber
+
+        return this.playTransactions(
+            tree, 
+            did, 
+            await this.getEventsFor(did, blockHeight, (maxHeight ? heightToBlockHeight(maxHeight) : undefined)),
+            maxHeight,
+        )
     }
 
     private async eventToTransition(evt: Event): Promise<Transition | null> {
@@ -219,62 +266,75 @@ export class EthereumBack {
         return evt.args.bloom === hsh
     }
 
-    private async playTransactions(tree: PolicyTree, did: string, transactions: Event[], maxBlockHeight?: number): Promise<PolicyTree> {
-        log("play transactions: ", transactions)
+    private async playTransactions(tree: PolicyTree, did: string, events: Event[], maxHeight?: number): Promise<PolicyTree> {
+        log("play transactions: ", did, events, "height: ", await tree.height(), "max: ", maxHeight)
         // if we have no transactions here it means we've reached the end of paging
-        if (transactions.length === 0) {
+        if (events.length === 0) {
+            log("returning tree")
             return tree
         }
 
         // go through all the transactions and if none of them are more recent, just move onto the next one
 
-        const transitionsByBlockHeight: { [key: number]: Transition[] } = {}
+        // const transitionsByBlockHeight: { [key: number]: Transition[] } = {}
 
-        let highestBlock = 0
-        for (const tran of transactions) {
-            if (tran.blockNumber > highestBlock) {
-                highestBlock = tran.blockNumber
+        let sortedEvents = events.sort((a,b)=> {return evtToHeight(a) - evtToHeight(b)})
+
+        const highestBlock = sortedEvents[sortedEvents.length - 1].blockNumber
+
+        // now find the end of the events we care about
+        const indexOfLast = sortedEvents.findIndex((evt)=> {
+            return evtToHeight(evt) > maxHeight
+        })
+        if (indexOfLast !== -1) {
+            sortedEvents = sortedEvents.slice(0, indexOfLast)
+        }
+
+        const treeHeight = await tree.height()
+        let transitionsToApply:Transition[] = []
+        for (const event of sortedEvents) {
+            const height = evtToHeight(event)
+            if (height <= treeHeight) {
+                continue // we could be replaying a block we didn't finish
             }
-            if (!this.eventHasDid(did, tran)) {
-                continue
+            if (!this.eventHasDid(did, event)) {
+                continue // we could have an event that doesn't include this did
             }
-            const transition = await this.eventToTransition(tran)
+            const transition = await this.eventToTransition(event)
             if (!transition) {
                 continue
             }
-            transition.sender = tran.args.from
-
-            let existing = transitionsByBlockHeight[tran.blockNumber]
-            existing = existing || []
-            existing.push(transition)
-            transitionsByBlockHeight[tran.blockNumber] = existing
+            transition.sender = event.args.from
+            transition.height = height
+            transitionsToApply.push(transition)
         }
 
-        const sortedKeys = Object.keys(transitionsByBlockHeight).sort((a: string, b: string) => parseInt(a, 10) - parseInt(b, 10)).map((k) => parseInt(k, 10))
+        // const sortedKeys = Object.keys(transitionsByBlockHeight).sort((a: string, b: string) => parseInt(a, 10) - parseInt(b, 10)).map((k) => parseInt(k, 10))
 
-        const sets = sortedKeys.map((key: number) => {
+        const sets = transitionsToApply.map((transition: Transition) => {
             return new TransitionSet({
                 source: "eth",
-                height: key,
-                transitions: transitionsByBlockHeight[key],
+                height: transition.height,
+                transitions: [transition],
             })
         })
 
         for (let set of sets) {
-            log("applying set")
-            const previousBlock = set.height - 1
+            log("applying set ", set)
+            // const previousBlock = set.height
+            const previousHeight = previousLogIndex(set.height)
             await tree.applySet(set, {
                 ...this.baseUniverse,
                 // we want the transitions to always produce reproducible results so always use the state of *other* assets
                 // at the previous block height to the block height of this transition
                 getAsset: async (did: string) => {
-                    log("this asset called: ", did, ' block: ', previousBlock)
-                    return (await (await this.getAsset(did, previousBlock)).at(previousBlock))
+                    log("getAsset called from set: ", did, ' height: ', previousHeight)
+                    return (await (await this.getAsset(did, previousHeight)).at(previousHeight))
                 },
             })
         }
 
         const nextEvents = await this.getEventsFor(did, highestBlock + 1)
-        return this.playTransactions(tree, did, nextEvents, maxBlockHeight)
+        return this.playTransactions(tree, did, nextEvents, maxHeight)
     }
 }

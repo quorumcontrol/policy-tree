@@ -51,12 +51,14 @@ describe('ethereum', () => {
 
         let tree = await eth.getAsset(did)
 
-        await eth.transitionAsset(did, {
+        const resp = await eth.transitionAsset(did, {
             type: TransitionTypes.SET_DATA,
             metadata: {
                 'hi': 'hi'
             }
         })
+
+        await resp.wait()
 
         tree = await eth.getAsset(did)
 
@@ -87,9 +89,11 @@ describe('ethereum', () => {
             metadata: {},
         })
 
+        const receipt = await transResponse.wait()
+
         tree = await eth.getAsset(did)
 
-        expect((await tree.current()).getData('block')).to.include({ number: transResponse.blockNumber })
+        expect((await tree.current()).getData('block')).to.include({ number: receipt.blockNumber })
     })
 
     it('reproducible results based on block height of the transition', async () => {
@@ -125,12 +129,14 @@ describe('ethereum', () => {
         })
 
         // first we transition alice and bob through a few iterations
-        await eth.transitionAsset(bobDid, {
+        const lastResp = await eth.transitionAsset(bobDid, {
             type: 4, // 4 is WRITE_OTHER in the contract
             metadata: {
                 did: aliceDid,
             }
         })
+
+        await lastResp.wait()
 
         bob = await eth.getAsset(bobDid)
 
@@ -138,7 +144,7 @@ describe('ethereum', () => {
         expect((await bob.current()).getData(aliceDid)).to.equal(2)
 
         // going back in history should show it at 1
-        expect((await bob.at(bobFirstTransTx.blockNumber)).getData(aliceDid)).to.equal(1)
+        expect((await bob.at((await bobFirstTransTx.wait()).blockNumber)).getData(aliceDid)).to.equal(1)
     })
 
     it('sends coins through the standard contract', async () => {
@@ -166,7 +172,7 @@ describe('ethereum', () => {
             },
         })
 
-        await eth.transitionAsset(bobDid, {
+        const lastResp = await eth.transitionAsset(bobDid, {
             type: TransitionTypes.RECEIVE_TOKEN,
             metadata: {
                 token: canonicalTokenName(alice.did, 'aliceCoin'),
@@ -176,10 +182,11 @@ describe('ethereum', () => {
             },
         })
 
+        await lastResp.wait()
+
         bob = await eth.getAsset(bobDid)
         expect((await bob.current()).getBalance(canonicalTokenName(alice.did, 'aliceCoin')).toString()).to.equal(BigNumber.from(10).toString())
     })
-
 
     describe('liquid', () => {
         let heavenToken: Contract
@@ -210,7 +217,7 @@ describe('ethereum', () => {
             await eth.transitionAsset(did, {
                 type: 4, // elevate
                 metadata: {
-                    block: resp.blockNumber,
+                    block: (await resp.wait()).blockNumber,
                     dest: bobDid,
                 }
             })
@@ -236,14 +243,14 @@ describe('ethereum', () => {
                 },
             })
 
-            await eth.transitionAsset(did, {
+            await (await eth.transitionAsset(did, {
                 type: 5, // descend
                 metadata: {
                     from: bobDid,
                     nonce: 'bobsbigoffer', // nonce of the sendToken
                     to: bobEthAddr, // eth addr to send HWEI
                 },
-            })
+            })).wait()
 
             const bobAfter = await (await eth.getAsset(bobDid)).current()
 
@@ -262,12 +269,12 @@ describe('ethereum', () => {
                 metadata: {
                     offer: offerHash,
                     pay: aliceLPDid,
-                    block: handleResp.blockNumber,
+                    block: (await handleResp.wait()).blockNumber,
                 },
             })
 
             contractAfter = await (await eth.getAsset(did)).current()
-            await eth.transitionAsset(aliceLPDid, {
+            await (await eth.transitionAsset(aliceLPDid, {
                 type: TransitionTypes.RECEIVE_TOKEN,
                 metadata: {
                     token: canonicalTokenName(did, 'hwei'),
@@ -275,7 +282,7 @@ describe('ethereum', () => {
                     from: did,
                     nonce: offerHash,
                 },
-            })
+            })).wait()
             contractAfter = await (await eth.getAsset(did)).current()
             const aliceAfter = await (await eth.getAsset(aliceLPDid)).current()
             expect(contractAfter.getBalance(canonicalTokenName(did, 'hwei')).toNumber()).to.equal(0)
@@ -298,12 +305,12 @@ describe('ethereum', () => {
             await eth.transitionAsset(did, {
                 type: 4,
                 metadata: {
-                    block: resp.blockNumber,
+                    block: (await resp.wait()).blockNumber,
                     dest: bobDid,
                 }
             })
 
-            await eth.transitionAsset(bobDid, {
+            const lastTrans = await eth.transitionAsset(bobDid, {
                 type: TransitionTypes.RECEIVE_TOKEN,
                 metadata: {
                     token: canonicalTokenName(did, 'hwei'),
@@ -312,6 +319,8 @@ describe('ethereum', () => {
                     nonce: resp.hash,
                 },
             })
+
+            await lastTrans.wait()
 
             const bobAfter = await (await eth.getAsset(bobDid)).current()
             const contractAfter = await (await eth.getAsset(did)).current()

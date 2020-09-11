@@ -25,7 +25,7 @@ export class VersionStore {
         }
         this.current = this.getCurrent()
     }
-    
+
     // generally we want to have a height where store the current state, but it can be useful
     // to reconstruct an intermediate state... for instance if there are a block of transactions,
     // we want to know what the state was during a particular index in the block.
@@ -78,7 +78,7 @@ export class VersionStore {
 
     async stateAt(height:number) {
         log("getting state at height: ", height)
-        if (height < 0) {
+        if ((!height && height !== 0)|| height < 0) {
             throw new Error("height must be >= 0")
         }
         const current = await this.current
@@ -93,6 +93,7 @@ export class VersionStore {
                 // so just ship back an empty state
                 return {}
             }
+            log("traversing to previous: ", doc.previous)
             if (doc.previous >= height) {
                 return traverser(doc.previous)
             }

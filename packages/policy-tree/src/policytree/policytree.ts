@@ -38,8 +38,6 @@ export class PolicyTree {
     // private valueStore:VersionStore
     private metaStore: CborStore
     private policy?: Promise<Policy>
-    height: number
-
 
     static async create(opts: PolicyTreeConstructorOpts, genesis: GenesisOptions = {}, universe?:any) {
         const genesisBlock = await makeBlock(genesis)
@@ -89,6 +87,10 @@ export class PolicyTree {
         }).bind(this), height)
         
         return true
+    }
+
+    async height() {
+        return (await this.dataStore.current).height
     }
 
     async exists() {
