@@ -25,7 +25,10 @@ export class VersionStore {
         }
         this.current = this.getCurrent()
     }
-
+    
+    // generally we want to have a height where store the current state, but it can be useful
+    // to reconstruct an intermediate state... for instance if there are a block of transactions,
+    // we want to know what the state was during a particular index in the block.
     async update(updater: (doc: StateDoc) => StateDoc, height: number) {
         try {
             const previous = await this.current

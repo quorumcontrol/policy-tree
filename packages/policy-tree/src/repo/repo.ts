@@ -17,17 +17,26 @@ export interface IKey {
     child(key:IKey):IKey
     concat(keys:IKey[]):IKey
 }
+
+// SEE: https://github.com/ipfs/interface-datastore#queryquery-options---asynciterableuint8array
+export interface Query {
+    prefix?:string, // 	Only return values where the key starts with this prefix
+    filters?:((val:Uint8Array)=>Boolean)[], //	Filter the results according to the these functions
+    orders?:((val:Uint8Array[])=>Uint8Array[])[], //	Order the results according to these functions
+    limit?:number //Only return this many records
+    offset?:number //Skip this many records at the beginning
+    // there's also an options here with an abort signal that we're not defining
+}
+
 /** 
  * Describes the interface implemented by IPFS
- * @remarks
- * we are currently on 0.6.0 of the datastore which uses a callback style insted of promises
- * 
 */
 export interface IDataStore {
     has(key:IKey):Promise<boolean>
     put(key:IKey, val:Uint8Array):Promise<boolean>
     get(key:IKey):Promise<Uint8Array>
     delete(key:IKey):Promise<void>
+    query(query:Query):AsyncIterable<{key:IKey,value:Uint8Array}>
 }
 
 interface IStorageBackendOpts {

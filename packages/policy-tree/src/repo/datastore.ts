@@ -1,4 +1,4 @@
-import {Repo, IDataStore, IKey, Key} from './repo'
+import {Repo, IDataStore, IKey, Key, Query} from './repo'
 
 const dagCBOR = require('ipld-dag-cbor')
 
@@ -21,6 +21,11 @@ export class CborStore {
         return dKey
     }
 
+    private denamespacedKey(key:IKey) {
+        let keyStr = key.toString().slice(this.namespace.toString().length)
+        return new Key(keyStr)
+    }
+
     put(key:string, val:any) {
         const dKey = this.namespacedKey(key)
         const bits = dagCBOR.util.serialize(val)
@@ -40,4 +45,19 @@ export class CborStore {
             throw err
         }
     }
+
+    async * query<T=any>(query:Query):AsyncIterable<{key: IKey, value: T}> {
+        if (this.namespace && query.prefix) {
+            query.prefix = this.namespace.concat(new Key(query.prefix)).toString()
+        }
+        for await (const x of this.datastore.query(query)) {
+            let key = x.key
+            const value = dagCBOR.util.deserialize(x.value)
+            if (this.namespace) {
+                key = this.denamespacedKey(key)
+            }
+            yield {key: key, value: value}
+        }
+    }
+
 }

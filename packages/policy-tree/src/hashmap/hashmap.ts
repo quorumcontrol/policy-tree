@@ -25,20 +25,6 @@ IAMap.registerHasher(hashAlg, hashBytes, hasher)
 
 type immutableFunc = (key:string)=>Promise<IAMapInstance>
 
-class Counter {
-    max:number
-    constructor(max:number) {
-      this.max = max;
-    }
-  
-    // the star makes this a generator method
-    *[Symbol.iterator]() {
-      for (let i = 0; i < this.max; i++) {
-        yield i;
-      }
-    }
-  }
-
 interface IAMapInstance {
     id:CID
     set: (key:string,value:any)=>Promise<IAMapInstance>
