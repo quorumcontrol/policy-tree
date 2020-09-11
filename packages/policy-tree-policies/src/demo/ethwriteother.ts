@@ -62,6 +62,7 @@ const exp: HandlerExport<EthereumUniverse> = {
             return false
         }
         const metadata = transition.metadata
+        log("fetching: ", metadata.did)
         const other = await getAsset(metadata.did)
         return tree.setData(metadata.did, other.getData("hi"))
     },

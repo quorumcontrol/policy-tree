@@ -14,7 +14,7 @@ const exp:HandlerExport<EthereumUniverse> = {
     },
     [1000]: async (tree, transition, {getBlock})=> {
         tree.setData("transHeight", transition.height)
-        tree.setData("block", await getBlock(transition.height))
+        tree.setData("block", await getBlock(Math.trunc(transition.height / 1000000000000)))
         return true
     }
 }
