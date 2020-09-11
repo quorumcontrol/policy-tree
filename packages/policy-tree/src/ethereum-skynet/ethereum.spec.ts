@@ -9,9 +9,9 @@ import { providers, utils, BigNumber, Contract } from 'ethers'
 import PolicyTreeTransitionContract from './PolicyTreeTransitions.json'
 import HeavenTokenJSON from './HeavenToken.json'
 import CID from 'cids'
-import {contracts as PolicyFile} from '../../../policy-tree-policies/lib/policies.json'
+import { contracts as PolicyFile } from '../../../policy-tree-policies/lib/policies.json'
 
-interface PolicyCIDAndLocator { 
+interface PolicyCIDAndLocator {
     policy: CID
     policyLocator: string
 }
@@ -22,7 +22,7 @@ describe('ethereum', () => {
     let contracts: { [key: string]: PolicyCIDAndLocator }
 
     before(async () => {
-        contracts = Object.keys(PolicyFile).reduce((mem, key)=> {
+        contracts = Object.keys(PolicyFile).reduce((mem, key) => {
             mem[key] = {
                 ...(PolicyFile as any)[key],
                 policy: new CID((PolicyFile as any)[key].policy),
@@ -147,6 +147,51 @@ describe('ethereum', () => {
         expect((await bob.at((await bobFirstTransTx.wait()).blockNumber)).getData(aliceDid)).to.equal(1)
     })
 
+    it('transitions multiple', async () => {
+        const [aliceDid,] = await eth.createAsset({ ...contracts['ethStandard'] })
+        const [bobDid,] = await eth.createAsset({ ...contracts['ethStandard'] })
+
+        const resp = await eth.transitionMultiple([
+            {
+                did: aliceDid,
+                transition: {
+                    type: TransitionTypes.MINT_TOKEN,
+                    metadata: {
+                        token: 'aliceCoin',
+                        amount: BigNumber.from(100).toString(),
+                    },
+                },
+            },
+            {
+                did: aliceDid,
+                transition: {
+                    type: TransitionTypes.SEND_TOKEN,
+                    metadata: {
+                        token: canonicalTokenName(aliceDid, 'aliceCoin'),
+                        amount: BigNumber.from(10).toString(),
+                        dest: bobDid,
+                        nonce: 'abc',
+                    },
+                },
+            },
+            {
+                did: bobDid,
+                transition: {
+                    type: TransitionTypes.RECEIVE_TOKEN,
+                    metadata: {
+                        token: canonicalTokenName(aliceDid, 'aliceCoin'),
+                        amount: BigNumber.from(10).toString(),
+                        from: aliceDid,
+                        nonce: 'abc',
+                    },
+                },
+            },
+        ])
+        await resp.wait()
+        const bob = await eth.getAsset(bobDid)
+        expect((await bob.current()).getBalance(canonicalTokenName(aliceDid, 'aliceCoin')).toString()).to.equal(BigNumber.from(10).toString())
+    })
+
     it('sends coins through the standard contract', async () => {
         const [aliceDid,] = await eth.createAsset({ ...contracts['ethStandard'] })
         const [bobDid,] = await eth.createAsset({ ...contracts['ethStandard'] })
@@ -214,6 +259,7 @@ describe('ethereum', () => {
             const bobEthAddr = await bobSigner.getAddress()
 
             const resp: providers.TransactionResponse = await heavenToken.elevateEth(utils.id(bobDid), { value: 1000 })
+
             await eth.transitionAsset(did, {
                 type: 4, // elevate
                 metadata: {

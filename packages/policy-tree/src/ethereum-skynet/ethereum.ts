@@ -6,7 +6,7 @@ import { GenesisOptions, PolicyTree, GENESIS_KEY } from '../policytree/policytre
 // import { HashMap, serialize, deserialize } from '../hashmap'
 // import { uploadBuffer, downloadFile } from '../skynet/skynet'
 import { Transition, TransitionSet, serializableTransition, transFromSerializeableTransition, SerializableTransition } from '../transitionset'
-import { makeBlock, decodeBits, blockFromBits } from '../repo/block'
+import { makeBlock, decodeBits, blockFromBits, IBlock } from '../repo/block'
 import { ReadOnlyPolicyTreeVersion } from '../policytree'
 
 
@@ -49,6 +49,8 @@ function didFromTxHash(txHash:string) {
 //     customBloom?: string
 //     useSia?: boolean
 // }
+
+type MultipleTransitions = {did: string, transition: Transition}[]
 
 const BLOCK_NUMBER_MULTIPLIER = 1000000000000
 const TRANSACTION_INDEX_MULTIPLIER = 100000
@@ -158,6 +160,21 @@ export class EthereumBack {
         const blk = await makeBlock(serializableTransition(trans))
         const bloom = utils.id(did)
         return await this.contract.log(bloom, blk.data)
+    }
+
+
+    async transitionMultiple(transitions: MultipleTransitions):Promise<providers.TransactionResponse> {
+        let blooms:string[] = []
+        let blkPromises:Promise<Uint8Array>[] = []
+        transitions.forEach((tran)=> {
+            blooms.push(utils.id(tran.did))
+            blkPromises.push(new Promise(async (resolve)=> {
+                const blk = await makeBlock(serializableTransition(tran.transition))
+                resolve(blk.data)
+            }))
+        })
+        
+        return await this.contract.logMultiple(blooms, await Promise.all(blkPromises))
     }
 
     private async getLocal(did: string) {
