@@ -1,6 +1,5 @@
-import React, { useContext } from 'react'
-import { WalletContext } from '../components/Web3Context'
-import { Spin, Layout, Row, Col } from 'antd'
+import React from 'react'
+import { Layout, Row, Col } from 'antd'
 import { EthCard } from '../components/EthCard';
 import { HweiCard } from '../components/HweiCard';
 const { Header, Content, Footer } = Layout;

@@ -1,7 +1,7 @@
 import React, { useContext, useState, useEffect } from 'react'
 import { Card, Button, Spin, InputNumber } from 'antd'
 import { WalletContext } from './Web3Context'
-import { BigNumber, Contract, providers, utils } from 'ethers'
+import { BigNumber, providers, utils } from 'ethers'
 import { TransitionTypes } from 'policy-tree'
 import { canonicalTokenName } from 'policy-tree/lib/policytree'
 
@@ -34,25 +34,36 @@ export const EthCard: React.FC = () => {
 
         const resp: providers.TransactionResponse = await ctx.heavenToken.elevateEth(utils.id(ctx.currentIdentity.did), { value: amount })
         console.log("resp: ", resp, "receipt: ", await resp.wait(1))
+        const receipt = await resp.wait()
+
+        const transitionResp = await ctx.eth.transitionMultiple([
+            {
+                did: ctx.liquidDid!,
+                transition: {
+                    type: 4,
+                    metadata: {
+                        block: receipt.blockNumber,
+                        dest: ctx.currentIdentity.did,
+                    }
+                },
+            },
+            {
+                did: ctx.currentIdentity.did, 
+                transition: {
+                    type: TransitionTypes.RECEIVE_TOKEN,
+                    metadata: {
+                        token: canonicalTokenName(ctx.liquidDid!, 'hwei'),
+                        amount: BigNumber.from(amount).toString(),
+                        from: ctx.liquidDid,
+                        nonce: resp.hash,
+                    },
+                },
+            }
+        ])
 
         console.log("transitioning liquid: ", ctx.liquidDid)
-        await (await ctx.eth.transitionAsset(ctx.liquidDid!, {
-            type: 4,
-            metadata: {
-                block: (await resp.wait()).blockNumber,
-                dest: ctx.currentIdentity.did,
-            }
-        })).wait(1)
+        await transitionResp.wait()
 
-        await (await ctx.eth.transitionAsset(ctx.currentIdentity.did, {
-            type: TransitionTypes.RECEIVE_TOKEN,
-            metadata: {
-                token: canonicalTokenName(ctx.liquidDid!, 'hwei'),
-                amount: BigNumber.from(amount).toString(),
-                from: ctx.liquidDid,
-                nonce: resp.hash,
-            },
-        })).wait(1)
         await ctx.refreshIdentity!()
         setLoading(false)
     }

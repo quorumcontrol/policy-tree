@@ -90,7 +90,7 @@ export const WalletProvider:React.FC = ({children})=> {
     const refreshIdentity = async ()=> {
         const id = await ctx.eth?.getAsset(ctx.identity?.did!)
         const current = id ? await id.current() : undefined
-        setCtx((s)=> {{ return {...s, identity: id, currentIdentity: current}}})
+        setCtx((s)=> { return {...s, identity: id, currentIdentity: current}})
         return
     }
 
