@@ -1,14 +1,14 @@
-import { HardhatUserConfig, task } from "hardhat/config";
-import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { Wallet, utils } from "ethers";
-// import "@nomiclabs/hardhat-waffle";
+import { HardhatUserConfig } from "hardhat/config";
 import "@nomiclabs/hardhat-ethers";
-// import "hardhat-deploy";
-
-const oneEth = utils.parseEther("1");
+import "hardhat-deploy";
 
 const config: HardhatUserConfig = {
   defaultNetwork: "hardhat",
+  namedAccounts: {
+    deployer: {
+      default: 0
+    },
+  },
   solidity: {
     compilers: [
       {

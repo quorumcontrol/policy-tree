@@ -1,5 +1,5 @@
 import { ethers } from "hardhat";
-import { BigNumber, Signer, Contract } from "ethers";
+import { Signer, Contract } from "ethers";
 import { expect } from "chai";
 import { StatelessLogger } from '../types/ethers-contracts/StatelessLogger'
 
@@ -10,7 +10,7 @@ export async function deploy<T=Contract>(name:string, ...args:any):Promise<T> {
     return (instance as any) as T
 }
 
-describe("Stateless", async () => {
+describe("StatelessLogger", async () => {
   let logger: StatelessLogger;
 
   let operator:Signer
