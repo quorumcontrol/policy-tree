@@ -1,0 +1,36 @@
+{
+  "language": "Solidity",
+  "sources": {
+    "contracts/StatelessLogger.sol": {
+      "content": "// SPDX-License-Identifier: MIT\npragma solidity ^0.7.0;\npragma experimental ABIEncoderV2;\n\ncontract StatelessLogger {\n  event Message(address indexed from, bytes32 indexed bloom, bytes data);\n\n  function log(bytes32 bloom, bytes memory transition) public {\n    emit Message(msg.sender, bloom, transition);\n  }\n\n  function logMultiple(bytes32[] memory blooms, bytes[] memory transitions) public {\n      for (uint i = 0; i < blooms.length; i++) {\n        emit Message(msg.sender, blooms[i], transitions[i]);\n      }\n  }\n\n  function callDataOnly(bytes32 bloom, bytes memory) public {\n    emit Message(msg.sender, bloom, \"\");\n  }\n\n}\n"
+    }
+  },
+  "settings": {
+    "optimizer": {
+      "enabled": true,
+      "runs": 1
+    },
+    "evmVersion": "istanbul",
+    "outputSelection": {
+      "*": {
+        "*": [
+          "abi",
+          "evm.bytecode",
+          "evm.deployedBytecode",
+          "evm.methodIdentifiers",
+          "metadata",
+          "devdoc",
+          "userdoc",
+          "storageLayout",
+          "evm.gasEstimates"
+        ],
+        "": [
+          "ast"
+        ]
+      }
+    },
+    "metadata": {
+      "useLiteralContent": true
+    }
+  }
+}
