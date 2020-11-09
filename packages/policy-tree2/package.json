@@ -1,0 +1,31 @@
+{
+  "name": "policy-tree2",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "cids": "^1.0.2",
+    "debug": "^4.2.0",
+    "ipfs-repo": "^7.0.0",
+    "ipld-block": "^0.11.0",
+    "ipld-dag-cbor": "^0.17.0",
+    "memdown": "^5.1.0",
+    "quickjs-emscripten": "^0.11.0"
+  },
+  "devDependencies": {
+    "@types/chai": "^4.2.14",
+    "@types/debug": "^4.1.5",
+    "@types/mocha": "^8.0.3",
+    "@types/node": "^14.14.6",
+    "chai": "^4.2.0",
+    "mocha": "^8.2.1",
+    "ts-node": "^9.0.0",
+    "typescript": "^4.0.5"
+  }
+}
