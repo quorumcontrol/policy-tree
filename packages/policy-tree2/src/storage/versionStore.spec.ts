@@ -11,8 +11,7 @@ describe('VersionStore', ()=> {
     let store:VersionStore
     beforeEach(async () => {
         repo = await openedMemoryRepo('VersionStore')
-        const cborStore = new CborStore(repo, "vers")
-        store = new VersionStore(cborStore)
+        store = new VersionStore(repo, "vers")
         await store.ready
     })
 
@@ -25,13 +24,27 @@ describe('VersionStore', ()=> {
         expect(await store.get('test')).to.equal('test')
     })
 
-    it('versions', async ()=> {
+    it('basic versions', async ()=> {
         await store.put("test", "test")
         await store.snapshot(1)
         await store.put('test', 'test2')
         expect(await store.get('test')).to.equal('test2')
         expect(await store.valueAt('test', 1)).to.equal('test')
     })
+
+    it('complex versions', async ()=> {
+        await store.put("test", "test")
+        await store.snapshot(1)
+        await store.put('createdIn1', true)
+        await store.put('test', 'test2')
+        await store.snapshot(10)
+        
+        await store.put('createdIn1', 'updated')
+
+        expect(await store.valueAt('createdIn1', 2)).to.equal(true)
+
+    })
+
 
 
 })

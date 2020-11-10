@@ -1,5 +1,5 @@
 import { CborStore } from "./cborStore";
-import { Key } from "./repo";
+import Repo, { Key } from "./repo";
 import debug from 'debug'
 
 const log = debug('VersionStore')
@@ -7,6 +7,7 @@ const log = debug('VersionStore')
 const snapshotKey = "__snapshot";
 
 function findUpperBound(arry: number[], element: number): number {
+  log("find upper bound: ", arry, element)
   if (arry.length == 0) {
     return 0;
   }
@@ -24,6 +25,7 @@ function findUpperBound(arry: number[], element: number): number {
     } else {
       low = mid + 1;
     }
+    log('high', high, 'low', low, 'mid', mid)
   }
 
   // At this point `low` is the exclusive upper bound. We will return the inclusive upper bound.
@@ -47,8 +49,8 @@ export class VersionStore {
 
   store: CborStore;
 
-  constructor(store: CborStore) {
-    this.store = store;
+  constructor(repo:Repo, namespace?:string) {
+    this.store = new CborStore(repo, namespace);
     this.currentSnapshot = 0;
     this.ready = this.setup();
   }
@@ -64,11 +66,11 @@ export class VersionStore {
   }
 
   private valueSnapKey(key: string): string {
-    return new Key(snapshotKey).child(key).toString();
+    return new Key(snapshotKey).child(new Key(key)).toString();
   }
 
   private valueSnapKeyAt(key: string, height: number): string {
-    return new Key(snapshotKey).child(key).child(height.toString()).toString();
+    return new Key(snapshotKey).child(new Key(key)).child(new Key(height.toString())).toString();
   }
 
   private async _valueAt(key: string, height: number): Promise<[boolean, any]> {
@@ -115,12 +117,13 @@ export class VersionStore {
     const ids = await this.snapshotIds(key);
     const id = lastId(ids);
     if (id < currentId) {
-      log("storing at ", currentId)
-      ids.push(currentId);
-      log("storing: ", this.valueSnapKey(key), ' and ', this.valueSnapKeyAt(key, currentId))
+      log("storing at ", currentId - 1)
+      const existing = await this.store.get(key)
+      ids.push(currentId - 1);
+      log("storing: ", this.valueSnapKey(key), ' and ', this.valueSnapKeyAt(key, currentId - 1))
       await Promise.all([
           this.store.put(this.valueSnapKey(key), ids),
-          this.store.put(this.valueSnapKeyAt(key, currentId), val)
+          this.store.put(this.valueSnapKeyAt(key, currentId - 1), existing)
       ])
     }
     return this.store.put(key, val);
