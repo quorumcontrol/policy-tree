@@ -1,5 +1,5 @@
-import { CborStore } from "./cborStore";
-import Repo, { Key } from "./repo";
+import { CborStore, ICborStore } from "./cborStore";
+import Repo, { IDataStore, Key } from "./repo";
 import debug from 'debug'
 
 const log = debug('VersionStore')
@@ -43,7 +43,7 @@ function lastId(arry: number[]): number {
   return arry[arry.length - 1];
 }
 
-export class VersionStore {
+export class VersionStore implements ICborStore {
   currentSnapshot: number;
   ready: Promise<void>;
 
@@ -76,6 +76,9 @@ export class VersionStore {
   private async _valueAt(key: string, height: number): Promise<[boolean, any]> {
     // require(snapshotId > 0, "ERC20Snapshot: id is 0");
     // // solhint-disable-next-line max-line-length
+    if (height > this.currentSnapshot) {
+        throw new Error("non existant ID")
+    }
     // require(snapshotId <= _currentSnapshotId.current(), "ERC20Snapshot: nonexistent id");
 
     // When a valid snapshot is queried, there are three possibilities:
@@ -107,8 +110,14 @@ export class VersionStore {
     return this.store.get<T>(key);
   }
 
+  has(key:string) {
+      return this.store.has(key)
+  }
+
   async valueAt(key: string, height: number): Promise<any> {
     const [snapshotted, value] = await this._valueAt(key, height);
+    log("getting ", key, " at ", height)
+    log("snapshotted: ", snapshotted, value)
     return snapshotted ? value : this.store.get(key);
   }
 
@@ -117,7 +126,7 @@ export class VersionStore {
     const ids = await this.snapshotIds(key);
     const id = lastId(ids);
     if (id < currentId) {
-      log("storing at ", currentId - 1)
+      log("storing ", key, val, ", at ", currentId - 1)
       const existing = await this.store.get(key)
       ids.push(currentId - 1);
       log("storing: ", this.valueSnapKey(key), ' and ', this.valueSnapKeyAt(key, currentId - 1))
@@ -133,7 +142,8 @@ export class VersionStore {
     if (this.currentSnapshot > height) {
       throw new Error("you can only snapshot at higher numbers than current");
     }
-    this.currentSnapshot = height;
+    log("snapshot: ", height)
+    this.currentSnapshot = height + 1;
     return this.store.put(snapshotKey, this.currentSnapshot);
   }
 }

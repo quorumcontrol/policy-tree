@@ -28,8 +28,10 @@ describe('VersionStore', ()=> {
         await store.put("test", "test")
         await store.snapshot(1)
         await store.put('test', 'test2')
+        await store.snapshot(2)
         expect(await store.get('test')).to.equal('test2')
         expect(await store.valueAt('test', 1)).to.equal('test')
+        expect(await store.valueAt('test', 2)).to.equal('test2')
     })
 
     it('complex versions', async ()=> {

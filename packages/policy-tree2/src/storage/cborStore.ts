@@ -2,7 +2,13 @@ import {Repo, IDataStore, IKey, Key, Query} from './repo'
 
 const dagCBOR = require('ipld-dag-cbor')
 
-export class CborStore {
+export interface ICborStore {
+    put(key:string, val:any):Promise<boolean>
+    get(key:string):Promise<any>
+    has(key:string):Promise<boolean>
+}
+
+export class CborStore implements ICborStore {
     private datastore:IDataStore
     private namespace?:IKey
 
@@ -24,6 +30,11 @@ export class CborStore {
     private denamespacedKey(key:IKey) {
         let keyStr = key.toString().slice(this.namespace.toString().length)
         return new Key(keyStr)
+    }
+
+    has(key:string) {
+        const dKey = this.namespacedKey(key)
+        return this.datastore.has(dKey)
     }
 
     put(key:string, val:any) {
