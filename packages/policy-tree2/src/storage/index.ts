@@ -2,6 +2,8 @@ import Repo from "./repo"
 export * from './repo'
 export * from './block'
 export * from './cborStore'
+export * from './versionStore'
+export * from './transaction'
 
 const MemoryStore = require('interface-datastore').MemoryDatastore
 const memoryLock = require('ipfs-repo/src/lock-memory')
