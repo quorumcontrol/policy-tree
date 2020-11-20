@@ -17,7 +17,7 @@ describe('PolicyObject', ()=> {
     it('genesis', async ()=> {
         const obj = await PolicyObject.genesis('test', repo, 22, {test:true})
         expect(await obj.get('test')).to.equal(true)
-        expect(await obj.valueAt('test', 22)).to.equal(true)
+        expect(await obj.getAt('test', 22)).to.equal(true)
     })
 
     it('transacts', async ()=> {
@@ -26,8 +26,8 @@ describe('PolicyObject', ()=> {
         await tx.put('test', 'new')
         await tx.commit()
         expect(await obj.get('test')).to.equal('new')
-        expect(await obj.valueAt('test', 22)).to.equal(true)
-        expect(await obj.valueAt('test', 23)).to.equal('new')
+        expect(await obj.getAt('test', 22)).to.equal(true)
+        expect(await obj.getAt('test', 23)).to.equal('new')
     })
 
 })

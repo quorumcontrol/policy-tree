@@ -1,5 +1,5 @@
 import { CborStore, ICborStore } from "./cborStore";
-import Repo, { IDataStore, Key } from "./repo";
+import Repo, { Key } from "./repo";
 import debug from 'debug'
 
 const log = debug('VersionStore')
@@ -74,8 +74,6 @@ export class VersionStore implements ICborStore {
   }
 
   private async _valueAt(key: string, height: number): Promise<[boolean, any]> {
-    // require(snapshotId > 0, "ERC20Snapshot: id is 0");
-    // // solhint-disable-next-line max-line-length
     if (height > this.currentSnapshot) {
         throw new Error("non existant ID")
     }
@@ -114,7 +112,7 @@ export class VersionStore implements ICborStore {
       return this.store.has(key)
   }
 
-  async valueAt(key: string, height: number): Promise<any> {
+  async getAt(key: string, height: number): Promise<any> {
     const [snapshotted, value] = await this._valueAt(key, height);
     log("getting ", key, " at ", height)
     log("snapshotted: ", snapshotted, value)
