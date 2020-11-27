@@ -30,8 +30,8 @@ describe('VersionStore', ()=> {
         await store.put('test', 'test2')
         await store.snapshot(2)
         expect(await store.get('test')).to.equal('test2')
-        expect(await store.valueAt('test', 1)).to.equal('test')
-        expect(await store.valueAt('test', 2)).to.equal('test2')
+        expect(await store.getAt('test', 1)).to.equal('test')
+        expect(await store.getAt('test', 2)).to.equal('test2')
     })
 
     it('complex versions', async ()=> {
@@ -43,7 +43,7 @@ describe('VersionStore', ()=> {
         
         await store.put('createdIn1', 'updated')
 
-        expect(await store.valueAt('createdIn1', 2)).to.equal(true)
+        expect(await store.getAt('createdIn1', 2)).to.equal(true)
 
     })
 
